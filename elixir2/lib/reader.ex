@@ -50,7 +50,9 @@ defmodule Mal.Reader do
 
   defp read_atom(")"), do: raise "mismatched )"
   defp read_atom("]"), do: raise "mismatched ]"
-
+  defp read_atom("true"), do: true
+  defp read_atom("false"), do: false 
+  defp read_atom(":" <> rest = token), do: {:keyword, token}
   defp read_atom("\"" <> _ = token) do
     token
     |> String.slice(1..-2)
@@ -58,9 +60,13 @@ defmodule Mal.Reader do
   end
 
   defp read_atom(token) do
-    if Regex.match?(~r/^\d+$/, token) do
-      {res, _} = Integer.parse(token)
-      res
+    if Regex.match?(~r/^[-+]?(\d*\.\d+|\d+\.?|\.\d+|\d)$/, token) do
+      {res, _} = Float.parse(token)
+      if res == round(res) do
+        round(res)
+      else
+        res
+      end
     else
       String.to_atom( token )
     end

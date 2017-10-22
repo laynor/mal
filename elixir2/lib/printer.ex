@@ -39,6 +39,9 @@ defmodule Mal.Printer do
   end
 
   def pr_str({:array, lst}, opts) do
+    Enum.map_join(lst, " ", fn (obj) ->
+      pr_str(obj, opts)
+    end)
     body = lst
     |> Enum.map(&(pr_str(&1, opts)))
     |> Enum.join(" ")
@@ -54,12 +57,15 @@ defmodule Mal.Printer do
     end
   end
 
-  def pr_str(obj, opts) when is_number(obj) do
+  def pr_str(obj, opts) when is_function(obj) do
+    "<function>"
+  end
+
+  def pr_str({:keyword, keyword}, opts) do
+    keyword
+  end
+
+  def pr_str(obj, opts) do
     to_string(obj)
   end
-
-  def pr_str(obj, opts) when is_atom(obj) do
-    Atom.to_string(obj)
-  end
-
 end

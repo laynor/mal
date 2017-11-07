@@ -1,0 +1,22 @@
+defmodule Mal.Env do
+  use Agent
+  def start_link() do
+    Agent.start_link fn -> %{} end
+  end
+
+  def start_link(env) do
+    Agent.start_link fn -> env end
+  end
+
+  def get(env, sym) do
+    Agent.get(env, fn m -> m[sym] end)
+  end
+
+  def put(env, sym, val) do
+    Agent.update(env, fn m -> Map.put(m, sym, val) end)
+  end
+
+  def env do
+    Agent.get(env, fn m -> m end)
+  end
+end

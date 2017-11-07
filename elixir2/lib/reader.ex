@@ -33,7 +33,7 @@ defmodule Mal.Reader do
   defp pread_form(["{"|ts]), do: read_map(ts)
   defp pread_form([t|ts]), do: {read_atom(t), ts}
 
-  defp escape_first(""), do: ""
+  defp escape_first(""), do: "\\"
   defp escape_first(str) do
     case str do
       "n" <> rest -> "\n" <> rest
@@ -43,7 +43,12 @@ defmodule Mal.Reader do
       _   -> str
     end
   end
-  defp escape(s) do
+  def escape(s)  do
+    foo = String.split(s, "\\\\")
+    foo
+    |> Enum.map_join("\\", &escape1/1)
+  end
+  def escape1(s) do
     [first|rest] = String.split(s, "\\")
     first <> Enum.map_join(rest, &escape_first/1)
   end

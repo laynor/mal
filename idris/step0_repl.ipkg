@@ -1,0 +1,6 @@
+package step0_repl
+
+modules = step0_repl
+main = step0_repl
+executable = step0_repl
+opts = "-p contrib"

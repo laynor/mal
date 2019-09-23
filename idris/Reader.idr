@@ -44,23 +44,18 @@ terminal' f = terminal (\x => if (f x)
                               then Just x
                               else Nothing)
 
-many1 : Grammar ty True ty2 -> Grammar ty True (List ty2)
-many1 g = do r <- g
-             rs <- many g
-             pure $ r :: rs
-
 digit : Grammar Char True Char
 digit = terminal' isDigit
 
 number : Grammar Char True Integer
-number = do digits <- many1 digit
+number = do digits <- some digit
             pure (cast (pack digits))
 
 notSpaceOrSpecial : Grammar Char True Char
 notSpaceOrSpecial = terminal' (\c => not (isSpecial c || isSpace c))
 
 identifier : Grammar Char True (List Char)
-identifier = many1 notSpaceOrSpecial
+identifier = some notSpaceOrSpecial
 
 data Token = TOpenParen
            | TCloseParen
@@ -123,7 +118,7 @@ space = do terminal' isSpace
            pure ()
 
 spaces : Grammar Char True ()
-spaces = do many1 space
+spaces = do some space
             pure ()
 
 maybeSpaces : Grammar Char False ()

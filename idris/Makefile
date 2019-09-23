@@ -1,5 +1,5 @@
-SRCS = step0_repl.idr
-OTHER_SRCS =
+SRCS = step0_repl.idr step1_read_print.idr
+OTHER_SRCS = Reader.idr
 BINS = $(SRCS:%.idr=%)
 
 #####################

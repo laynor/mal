@@ -7,37 +7,9 @@ import Data.String
 
 isStringDelim : Char -> Bool
 isStringDelim = (=='"')
+
 isSpecial : Char -> Bool
 isSpecial x = elem x (unpack "(){}[]~'`@")
-
--- tokenizeString : List Char -> Maybe (List Char, List Char)
--- -- tokenizeString [] = Nothing
-
--- partial
--- tokenizeLst : List Char -> List Char -> List (List Char)
--- tokenizeLst [] []  = []
--- tokenizeLst [] acc = [acc]
--- tokenizeLst (c::input) [] = if isStringDelim c
---                             then let res = tokenizeString input in
---                                      case res of
---                                        | Just s => s :: tokenizeLst rest []
---                                        | Nothing  => Nothing
---                             else if isSpecial c
---                             then [c] :: tokenizeLst input []
---                             else if isSpace c
---                             then tokenizeLst input []
---                             else tokenizeLst input [c]
-
--- tokenizeLst (c::input) acc = if isSpecial c || isStringDelim c
---                              then acc :: tokenizeLst (c :: input) []
---                              else if isSpace c
---                              then acc :: tokenizeLst (c :: input) []
---                              else tokenizeLst input (acc ++ [c])
-
-
--- partial
--- tokenize : String -> List String
--- tokenize input = map pack (tokenizeLst (unpack input) [])
 
 terminal' : (ty -> Bool) -> Grammar ty True ty
 terminal' f = terminal (\x => if (f x)
@@ -109,10 +81,6 @@ tnumber : Grammar Char True Token
 tnumber = do res <- number
              pure $ TNum res
 
--- tsymbol : Grammar Char True Token
--- tsymbol = do res <- identifier
---              pure $ TSym (pack res)
-
 space : Grammar Char True ()
 space = do terminal' isSpace
            pure ()
@@ -149,21 +117,6 @@ numOrSym = some (terminal' (\x => not (isSpecial x || isSpace x)))
 ns : Grammar Char True Token
 ns = do res <- numOrSym
         pure $ toToken (pack res)
-
-{-
-partial
-numberOrSymbol : List Char -> Grammar Char False Token
-numberOrSymbol acc = do c <- peek
-                        if isSpecial c || isSpace c
-                        then pure $ toToken (pack acc)
-                        else do terminal' (\x => True)
-                                numberOrSymbol (acc ++ [c])
-
-partial
-ns : Grammar Char True Token
-ns = do c <- terminal' (not . isSpecial)
-        numberOrSymbol [c]
--}
 
 any : Grammar ty True ty
 any = terminal (\x => Just x)
@@ -250,9 +203,3 @@ tokens = t1 <|> t2 <|> t3 <|> t4 <|> t5 <|> t6
             maybeSpaces
             eof
             pure [sp]
-
--- TOK -> maybeSpaces SYM maybeSpaces SPECIAL TOK
--- TOK -> maybeSpaces SYM maybeSpaces SPACE TOK
--- TOK -> maybeSpaces SPECIAL TOK
--- TOK -> maybeSpaces SYM maybeSpaces eof
--- TOK -> maybeSpaces SPECIAL maybeSpaces eof

@@ -1,205 +1,257 @@
-module Mal.Reader
+module Reader
 
 import Text.Parser
 import Data.String
+import Parser
 
 %default total
 
-isStringDelim : Char -> Bool
-isStringDelim = (=='"')
+namespace Lexer
+  data Token = TOpenParen
+             | TCloseParen
+             | TOpenBracket
+             | TCloseBracket
+             | TOpenBrace
+             | TCloseBrace
+             | TQuote
+             | TQuasiQuote
+             | TUnquote
+             | TDeref
+             | TStr String
+             | TNum Integer
+             | TSym String
 
-isSpecial : Char -> Bool
-isSpecial x = elem x (unpack "(){}[]~'`@")
+  Eq Token where
+    (==) TOpenParen TOpenParen = True
+    (==) TCloseParen TCloseParen = True
+    (==) TOpenBracket TOpenBracket = True
+    (==) TCloseBracket TCloseBracket = True
+    (==) TOpenBrace TOpenBrace = True
+    (==) TCloseBrace TCloseBrace = True
+    (==) TQuote TQuote = True
+    (==) TQuasiQuote TQuasiQuote = True
+    (==) TUnquote TUnquote = True
+    (==) TDeref TDeref = True
+    (==) (TStr x) (TStr y) = x == y
+    (==) (TNum x) (TNum y) = x == y
+    (==) (TSym x) (TSym y) = x == y
+    (==) _ _ = False
 
-terminal' : (ty -> Bool) -> Grammar ty True ty
-terminal' f = terminal (\x => if (f x)
-                              then Just x
-                              else Nothing)
+  Show Token where
+    show token = ?rhs
 
-digit : Grammar Char True Char
-digit = terminal' isDigit
+  ||| Matches MAL special Characters (which are tokens on their own)
+  isSpecial : Char -> Bool
+  isSpecial x = elem x (unpack "(){}[]~'`@")
 
-number : Grammar Char True Integer
-number = do digits <- some digit
-            pure (cast (pack digits))
+  -- TODO: optional sign
 
-notSpaceOrSpecial : Grammar Char True Char
-notSpaceOrSpecial = terminal' (\c => not (isSpecial c || isSpace c))
+  ||| Parse an open paren token
+  openParen : Grammar Char True Token
+  openParen = exactly '(' TOpenParen
 
-identifier : Grammar Char True (List Char)
-identifier = some notSpaceOrSpecial
+  ||| Parse an open bracket token
+  openBracket : Grammar Char True Token
+  openBracket = exactly '[' TOpenBracket
 
-data Token = TOpenParen
-           | TCloseParen
-           | TOpenBracket
-           | TCloseBracket
-           | TOpenBrace
-           | TCloseBrace
-           | TQuote
-           | TQuasiQuote
-           | TUnquote
-           | TDeref
-           | TStr String
-           | TNum Integer
-           | TSym String
+  ||| Parse an open brace token
+  openBrace : Grammar Char True Token
+  openBrace = exactly '{' TOpenBrace
 
-exactly : Eq ty => ty -> ty2 -> Grammar ty True ty2
-exactly input output = do res <- terminal' (==input)
-                          pure output
+  ||| Parse a close paren token
+  closeParen : Grammar Char True Token
+  closeParen = exactly ')' TCloseParen
 
-openParen : Grammar Char True Token
-openParen = exactly '(' TOpenParen
+  ||| Parse an close bracket token
+  closeBracket : Grammar Char True Token
+  closeBracket = exactly ']' TCloseBracket
 
-openBracket : Grammar Char True Token
-openBracket = exactly '[' TOpenBracket
+  ||| Parse an close brace token
+  closeBrace : Grammar Char True Token
+  closeBrace = exactly '}' TCloseBrace
 
-openBrace : Grammar Char True Token
-openBrace = exactly '{' TOpenBrace
+  ||| Parse a deref (@) token
+  deref : Grammar Char True Token
+  deref = exactly '@' TDeref
 
-closeParen : Grammar Char True Token
-closeParen = exactly ')' TCloseParen
+  ||| Parse a quote (') token
+  quote : Grammar Char True Token
+  quote = exactly '\'' TQuote
 
-closeBracket : Grammar Char True Token
-closeBracket = exactly ']' TCloseBracket
+  ||| Parse an unquote (~) token
+  unquote : Grammar Char True Token
+  unquote = exactly '~' TUnquote
 
-closeBrace : Grammar Char True Token
-closeBrace = exactly '}' TCloseBrace
+  ||| Parse a quasiquote (`) token
+  quasiquote : Grammar Char True Token
+  quasiquote = exactly '`' TQuasiQuote
 
-deref : Grammar Char True Token
-deref = exactly '@' TDeref
+  ||| Parse one or more whitespace character
+  spaces : Grammar Char True ()
+  spaces = do some space
+              pure ()
 
-quote : Grammar Char True Token
-quote = exactly '\'' TQuote
-
-unquote : Grammar Char True Token
-unquote = exactly '~' TUnquote
-
-quasiquote : Grammar Char True Token
-quasiquote = exactly '`' TQuasiQuote
-
-tnumber : Grammar Char True Token
-tnumber = do res <- number
-             pure $ TNum res
-
-space : Grammar Char True ()
-space = do terminal' isSpace
-           pure ()
-
-spaces : Grammar Char True ()
-spaces = do some space
-            pure ()
-
-maybeSpaces : Grammar Char False ()
-maybeSpaces = do many space
-                 pure ()
-
-isNewLine : Char -> Bool
-isNewLine c = elem c (unpack "\r\n")
-
-comment : Grammar Char True ()
-comment = do exactly ';' ()
-             many (terminal' (not . isNewLine))
-             pure ()
-
-ignore : Grammar Char True ()
-ignore = spaces <|> comment
+  ||| Parse zero or more whitespace characters
+  maybeSpaces : Grammar Char False ()
+  maybeSpaces = do many space
+                   pure ()
 
 
-toToken : String -> Token
-toToken acc = case parseInteger acc of
-                   Just n => TNum n
-                   Nothing => TSym acc
-
-partial
-numOrSym : Grammar Char True (List Char)
-numOrSym = some (terminal' (\x => not (isSpecial x || isSpace x)))
-
-ns : Grammar Char True Token
-ns = do res <- numOrSym
-        pure $ toToken (pack res)
-
-any : Grammar ty True ty
-any = terminal (\x => Just x)
-
-
-escapeChar : Char -> Char
-escapeChar 'r' = '\r'
-escapeChar 'n' = '\n'
-escapeChar 't' = '\t'
-escapeChar 'b' = '\b'
-escapeChar c   = c
-
-stringRest : List Char -> Grammar Char True (List Char)
-stringRest acc = do firstChar <- peek
-                    case firstChar of
-                      '"' => do any
-                                pure acc
-                      '\\' => do any
-                                 c <- any
-                                 stringRest (acc ++ [escapeChar c])
-                      _ => do any
-                              stringRest (acc ++ [firstChar])
-
-tstring : Grammar Char True Token
-tstring = do exactly '"' ()
-             res <- stringRest'
-             pure res
+  ||| Parse a comment
+  comment : Grammar Char True ()
+  comment = do exactly ';' ()
+               many (terminal' notNewLine)
+               pure ()
   where
-    stringRest' : Grammar Char True Token
-    stringRest' = do lst <- stringRest []
-                     pure $ TStr (pack lst)
+    notNewLine : Char -> Bool
+    notNewLine c = not $ elem c (unpack "\r\n")
 
-special : Grammar Char True Token
-special = openParen <|> closeParen <|> openBracket <|> closeBracket <|> openBrace <|> closeBrace <|> deref <|> quote <|> unquote <|> quasiquote
+  ignore : Grammar Char True ()
+  ignore = spaces <|> comment
 
-partial
-token : Grammar Char True Token
-token = special <|> ns
+  numOrSym : Grammar Char True Token
+  numOrSym = do res <- ns
+                pure $ toToken (pack res)
+    where
+      toToken : String -> Token
+      toToken acc = case parseInteger acc of
+                         Just n => TNum n
+                         Nothing => TSym acc
 
-%default partial
-tokens : Grammar Char True (List Token)
-tokens = t1 <|> t2 <|> t3 <|> t4 <|> t5 <|> t6
+      symbolChar : Grammar Char True Char
+      symbolChar = terminal' (\c => not (isSpecial c || isSpace c || c == '"'))
+
+      ns : Grammar Char True (List Char)
+      ns = some symbolChar
+
+  escapeChar : Char -> Char
+  escapeChar 'r' = '\r'
+  escapeChar 'n' = '\n'
+  escapeChar 't' = '\t'
+  escapeChar 'b' = '\b'
+  escapeChar c   = c
+
+  stringRest : List Char -> Grammar Char True (List Char)
+  stringRest acc = do firstChar <- peek
+                      case firstChar of
+                        '"' => do any
+                                  pure acc
+                        '\\' => do any
+                                   c <- any
+                                   stringRest (acc ++ [escapeChar c])
+                        _ => do any
+                                stringRest (acc ++ [firstChar])
+
+  string : Grammar Char True Token
+  string = do exactly '"' ()
+              res <- stringRest'
+              pure res
+    where
+      stringRest' : Grammar Char True Token
+      stringRest' = do lst <- stringRest []
+                       pure $ TStr (pack lst)
+
+  ||| Characters that are tokens on their own
+  special : Grammar Char True Token
+  special = openParen <|>
+            closeParen <|>
+            openBracket <|>
+            closeBracket <|>
+            openBrace <|>
+            closeBrace <|>
+            deref <|>
+            quote <|>
+            unquote <|>
+            quasiquote
+
+  ||| All tokens
+  partial
+  token : Grammar Char True Token
+  token = special <|> numOrSym <|> string
+
+  %default partial
+  -- TODO clean this one up
+  ||| Token sequence.
+  tokens : Grammar Char True (List Token)
+  tokens = t00 <|> t01 <|> t1 <|> t2 <|> t3 <|> t4 <|> t5 <|> t6
+    where
+      t1 : Grammar Char True (List Token)
+      t1 = do maybeSpaces
+              sy <- numOrSym
+              maybeSpaces
+              sp <- special
+              res <- tokens
+              pure $ sy :: sp :: res
+      t1_2 : Grammar Char True (List Token)
+      t1_2 = do maybeSpaces
+                sy <- numOrSym
+                maybeSpaces
+                sp <- string
+                res <- tokens
+                pure $ sy :: sp :: res
+
+      t2 : Grammar Char True (List Token)
+      t2 = do maybeSpaces
+              sy <- numOrSym
+              space
+              res <- tokens
+              pure $ sy :: res
+
+
+      t3 : Grammar Char True (List Token)
+      t3 = do maybeSpaces
+              sp <- special
+              res <- tokens
+              pure (sp :: res)
+
+
+      t4 : Grammar Char True (List Token)
+      t4 = do maybeSpaces
+              sy <- numOrSym
+              maybeSpaces
+              eof
+              pure [sy]
+
+      t5 : Grammar Char True (List Token)
+      t5 = do maybeSpaces
+              sp <- special
+              maybeSpaces
+              eof
+              pure [sp]
+
+      t6 : Grammar Char True (List Token)
+      t6 = do maybeSpaces
+              sy <- numOrSym
+              maybeSpaces
+              sp <- special
+              eof
+              pure [sy, sp]
+
+      t00 : Grammar Char True (List Token)
+      t00 = do maybeSpaces
+               s <- string
+               maybeSpaces
+               eof
+               pure [s]
+
+      t01 : Grammar Char True (List Token)
+      t01 = do maybeSpaces
+               s <- string
+               res <- tokens
+               pure $ s::res
+
+
+testInput : String
+testInput = "(foo bar baz :foo 123 ~@!!('`(antani) 123antani antani123 1+))\"foobar\"baz"
+
+test : String
+test = case parse tokens (unpack testInput) of
+            (Left l) => "Could not parse"
+            (Right (res, [])) => if length res == length expectedResult && all (\(x, y) => x == y) (zip res expectedResult)
+                                 then "OK"
+                                 else "Wrong"
   where
-    t3 : Grammar Char True (List Token)
-    t3 = do maybeSpaces
-            sp <- special
-            res <- tokens
-            pure (sp :: res)
-
-    t6 : Grammar Char True (List Token)
-    t6 = do maybeSpaces
-            sy <- ns
-            maybeSpaces
-            sp <- special
-            eof
-            pure [sy, sp]
-
-
-    t1 : Grammar Char True (List Token)
-    t1 = do maybeSpaces
-            sy <- ns
-            maybeSpaces
-            sp <- special
-            res <- tokens
-            pure $ sy :: sp :: res
-
-    t2 : Grammar Char True (List Token)
-    t2 = do maybeSpaces
-            sy <- ns
-            space
-            res <- tokens
-            pure $ sy :: res
-
-    t4 : Grammar Char True (List Token)
-    t4 = do maybeSpaces
-            sy <- ns
-            maybeSpaces
-            eof
-            pure [sy]
-
-    t5 : Grammar Char True (List Token)
-    t5 = do maybeSpaces
-            sp <- special
-            maybeSpaces
-            eof
-            pure [sp]
+    expectedResult : List Token
+    expectedResult = [TOpenParen, TSym "foo", TSym "bar", TSym "baz", TSym ":foo", TNum 123, TUnquote, TDeref,
+                      TSym "!!", TOpenParen, TQuote, TQuasiQuote, TOpenParen, TSym "antani", TCloseParen,
+                      TSym "123antani", TSym "antani123", TSym "1+", TCloseParen, TCloseParen, TStr "foobar", TSym "baz"]

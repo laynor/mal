@@ -1,6 +1,6 @@
 package step1_read_print
 
-modules = step1_read_print, Reader
+modules = step1_read_print, Reader, Parser
 main = step1_read_print
 executable = step1_read_print
 opts = "-p contrib"

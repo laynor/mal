@@ -11,8 +11,9 @@ terminal' f = terminal (\x => if (f x)
 
 export
 exactly : Eq ty => ty -> ty2 -> Grammar ty True ty2
-exactly input output = do res <- terminal' (==input)
-                          pure output
+exactly expected output = map (const output) (terminal' (==expected))
+-- exactly input output = do res <- terminal' (==input)
+--                           pure output
 
 export
 space : Grammar Char True ()
@@ -28,3 +29,7 @@ any = terminal (\x => Just x)
 export
 digit : Grammar Char True Char
 digit = terminal' isDigit
+
+export
+skip : Grammar ity c oty -> Grammar ity c ()
+skip g = map (const ()) g

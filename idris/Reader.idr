@@ -102,27 +102,27 @@ namespace Lexer
   comment = do exactly ';' ()
                many (terminal' notNewLine)
                pure ()
-  where
-    notNewLine : Char -> Bool
-    notNewLine c = not $ elem c (unpack "\r\n")
+    where
+      notNewLine : Char -> Bool
+      notNewLine c = not $ elem c (unpack "\r\n")
+
 
   ignore : Grammar Char True ()
   ignore = spaces <|> comment
 
+
   numOrSym : Grammar Char True Token
-  numOrSym = do res <- ns
+  numOrSym = do res <- some symbolChar
                 pure $ toToken (pack res)
     where
       toToken : String -> Token
       toToken acc = case parseInteger acc of
-                         Just n => TNum n
-                         Nothing => TSym acc
+                          Just n => TNum n
+                          Nothing => TSym acc
 
       symbolChar : Grammar Char True Char
       symbolChar = terminal' (\c => not (isSpecial c || isSpace c || c == '"'))
 
-      ns : Grammar Char True (List Char)
-      ns = some symbolChar
 
   escapeChar : Char -> Char
   escapeChar 'r' = '\r'
@@ -131,25 +131,22 @@ namespace Lexer
   escapeChar 'b' = '\b'
   escapeChar c   = c
 
-  stringRest : List Char -> Grammar Char True (List Char)
-  stringRest acc = do firstChar <- peek
-                      case firstChar of
-                        '"' => do any
-                                  pure acc
-                        '\\' => do any
-                                   c <- any
-                                   stringRest (acc ++ [escapeChar c])
-                        _ => do any
-                                stringRest (acc ++ [firstChar])
 
   string : Grammar Char True Token
   string = do exactly '"' ()
-              res <- stringRest'
-              pure res
+              stringRest []
     where
-      stringRest' : Grammar Char True Token
-      stringRest' = do lst <- stringRest []
-                       pure $ TStr (pack lst)
+      stringRest : List Char -> Grammar Char True Token
+      stringRest acc = do firstChar <- peek
+                          case firstChar of
+                            '"' => do any
+                                      pure $ TStr (pack acc)
+                            '\\' => do any
+                                       c <- any
+                                       stringRest (acc ++ [escapeChar c])
+                            _ => do any
+                                    stringRest (acc ++ [firstChar])
+
 
   ||| Characters that are tokens on their own
   special : Grammar Char True Token

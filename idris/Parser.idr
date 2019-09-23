@@ -3,6 +3,8 @@ module Mal.Parser
 
 import Text.Parser
 
+%default total
+
 export
 terminal' : (ty -> Bool) -> Grammar ty True ty
 terminal' f = terminal (\x => if (f x)

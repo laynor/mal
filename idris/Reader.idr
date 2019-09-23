@@ -166,72 +166,66 @@ namespace Lexer
   -- TODO clean this one up
   ||| Token sequence.
   tokens : Grammar Char True (List Token)
-  tokens = t00 <|> t01 <|> t1 <|> t2 <|> t3 <|> t4 <|> t5 <|> t6
+  tokens = stringEof <|> string' <|> t1  <|> nsStringEof <|> nsString <|> nsWs <|> special' <|> nsEof <|> specialEof <|> nsSpecialEof
     where
+      skipws : Grammar Char c oty -> Grammar Char c oty
+      skipws g = do maybeSpaces
+                    g
       t1 : Grammar Char True (List Token)
-      t1 = do maybeSpaces
-              sy <- numOrSym
-              maybeSpaces
-              sp <- special
+      t1 = do sy <- skipws numOrSym
+              sp <- skipws special
               res <- tokens
               pure $ sy :: sp :: res
-      t1_2 : Grammar Char True (List Token)
-      t1_2 = do maybeSpaces
-                sy <- numOrSym
-                maybeSpaces
-                sp <- string
+
+      nsString : Grammar Char True (List Token)
+      nsString = do sy <- skipws numOrSym
+                    sp <- skipws string
+                    res <- tokens
+                    pure $ sy :: sp :: res
+
+      nsWs : Grammar Char True (List Token)
+      nsWs = do sy <- skipws numOrSym
+                space
                 res <- tokens
-                pure $ sy :: sp :: res
+                pure $ sy :: res
 
-      t2 : Grammar Char True (List Token)
-      t2 = do maybeSpaces
-              sy <- numOrSym
-              space
-              res <- tokens
-              pure $ sy :: res
+      special' : Grammar Char True (List Token)
+      special' = do sp <- skipws special
+                    res <- tokens
+                    pure (sp :: res)
 
+      nsEof : Grammar Char True (List Token)
+      nsEof = do sy <- skipws numOrSym
+                 skipws eof
+                 pure [sy]
 
-      t3 : Grammar Char True (List Token)
-      t3 = do maybeSpaces
-              sp <- special
-              res <- tokens
-              pure (sp :: res)
+      specialEof : Grammar Char True (List Token)
+      specialEof = do sp <- skipws special
+                      skipws eof
+                      pure [sp]
 
+      nsSpecialEof : Grammar Char True (List Token)
+      nsSpecialEof = do sy <- skipws numOrSym
+                        sp <- skipws special
+                        skipws eof
+                        pure [sy, sp]
 
-      t4 : Grammar Char True (List Token)
-      t4 = do maybeSpaces
-              sy <- numOrSym
-              maybeSpaces
-              eof
-              pure [sy]
+      nsStringEof : Grammar Char True (List Token)
+      nsStringEof = do sy <- skipws numOrSym
+                       st <- skipws string
+                       skipws eof
+                       pure [sy, st]
 
-      t5 : Grammar Char True (List Token)
-      t5 = do maybeSpaces
-              sp <- special
-              maybeSpaces
-              eof
-              pure [sp]
+      stringEof : Grammar Char True (List Token)
+      stringEof = do s <- skipws string
+                     skipws eof
+                     pure [s]
 
-      t6 : Grammar Char True (List Token)
-      t6 = do maybeSpaces
-              sy <- numOrSym
-              maybeSpaces
-              sp <- special
-              eof
-              pure [sy, sp]
+      string' : Grammar Char True (List Token)
+      string' = do s <- skipws string
+                   res <- tokens
+                   pure $ s::res
 
-      t00 : Grammar Char True (List Token)
-      t00 = do maybeSpaces
-               s <- string
-               maybeSpaces
-               eof
-               pure [s]
-
-      t01 : Grammar Char True (List Token)
-      t01 = do maybeSpaces
-               s <- string
-               res <- tokens
-               pure $ s::res
 
 
 testInput : String

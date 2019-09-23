@@ -109,15 +109,14 @@ namespace Lexer
   ignore : Grammar Char True ()
   ignore = spaces <|> comment
 
-
   numOrSym : Grammar Char True Token
   numOrSym = do res <- some symbolChar
-                pure $ toToken (pack res)
+                pure $ toToken (pack res) -- rewriting this as map (toToken . pack) (some symbolChar) does not work
     where
       toToken : String -> Token
       toToken acc = case parseInteger acc of
-                          Just n => TNum n
-                          Nothing => TSym acc
+                         Just n => TNum n
+                         Nothing => TSym acc
 
       symbolChar : Grammar Char True Char
       symbolChar = terminal' (\c => not (isSpecial c || isSpace c || c == '"'))
@@ -161,11 +160,9 @@ namespace Lexer
             quasiquote
 
   ||| All tokens
-  partial
   token : Grammar Char True Token
   token = special <|> numOrSym <|> string
 
-  %default partial
   -- TODO clean this one up
   ||| Token sequence.
   tokens : Grammar Char True (List Token)
@@ -246,6 +243,7 @@ test = case parse tokens (unpack testInput) of
             (Right (res, [])) => if length res == length expectedResult && all (\(x, y) => x == y) (zip res expectedResult)
                                  then "OK"
                                  else "Wrong"
+            (Right (res, _)) => "Incomplete"
   where
     expectedResult : List Token
     expectedResult = [TOpenParen, TSym "foo", TSym "bar", TSym "baz", TSym ":foo", TNum 123, TUnquote, TDeref,

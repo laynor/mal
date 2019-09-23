@@ -30,6 +30,17 @@ export
 digit : Grammar Char True Char
 digit = terminal' isDigit
 
-export
-skip : Grammar ity c oty -> Grammar ity c ()
-skip g = map (const ()) g
+namespace SkipGrammar
+  export
+  skip : Grammar ity c oty -> Grammar ity c ()
+  skip g = map (const ()) g
+
+namespace SkipEq
+  export
+  skip : Eq ity => ity -> Grammar ity True ()
+  skip x = exactly x ()
+
+namespace SkipFn
+  export
+  skip : (ity -> Bool) -> Grammar ity True ()
+  skip pred = skip $ terminal' pred

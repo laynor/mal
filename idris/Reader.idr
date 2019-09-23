@@ -99,9 +99,8 @@ namespace Lexer
 
   ||| Parse a comment
   comment : Grammar Char True ()
-  comment = do exactly ';' ()
-               many (terminal' notNewLine)
-               pure ()
+  comment = do skip ';'
+               skip $ many (skip notNewLine)
     where
       notNewLine : Char -> Bool
       notNewLine c = not $ elem c (unpack "\r\n")

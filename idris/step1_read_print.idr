@@ -1,17 +1,23 @@
 module Main
+import Core
+import Reader
+import Printer
 
-read : String -> String
-read x = x
+%default total
 
-print : String -> String
-print x = x
+read : String -> MalType
+read x = readString x
 
-eval : String -> String
+print : MalType -> String
+print x = printString x
+
+eval : MalType -> MalType
 eval x = x
 
 rep : String -> String
 rep = print . eval . read
 
+partial
 main : IO ()
 main = repl "user> " rep'
   where

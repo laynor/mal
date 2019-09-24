@@ -3,6 +3,7 @@ module Reader
 import Text.Parser
 import Data.String
 import Parser
+import Core
 
 %default total
 
@@ -17,11 +18,28 @@ namespace Lexer
              | TQuasiQuote
              | TUnquote
              | TDeref
+             | TCaret
              | TStr String
              | TNum Integer
              | TSym String
+  Show Token where
+    show TCaret = "TCaret"
+    show TOpenParen = "TOpenParen"
+    show TCloseParen = "TCloseParen"
+    show TOpenBracket = "TOpenBracket"
+    show TCloseBracket = "TCloseBracket"
+    show TOpenBrace = "TOpenBrace"
+    show TCloseBrace = "TCloseBrace"
+    show TQuote = "TQuote"
+    show TQuasiQuote = "TQuasiQuote"
+    show TUnquote = "TUnquote"
+    show TDeref = "TDeref"
+    show (TStr x) = ("TStr " ++ show x)
+    show (TNum x) = ("TNum" ++ show x)
+    show (TSym x) = ("TSym" ++ x)
 
   Eq Token where
+    (==) TCaret TCaret = True
     (==) TOpenParen TOpenParen = True
     (==) TCloseParen TCloseParen = True
     (==) TOpenBracket TOpenBracket = True
@@ -83,16 +101,11 @@ namespace Lexer
   quasiquote : Grammar Char True Token
   quasiquote = exactly '`' TQuasiQuote
 
-  ||| Parse one or more whitespace character
-  spaces : Grammar Char True ()
-  spaces = do some space
-              pure ()
+  comma : Grammar Char True ()
+  comma = skip ','
 
-  ||| Parse zero or more whitespace characters
-  maybeSpaces : Grammar Char False ()
-  maybeSpaces = do many space
-                   pure ()
-
+  caret : Grammar Char True Token
+  caret = exactly '^' TCaret
 
   ||| Parse a comment
   comment : Grammar Char True ()
@@ -102,22 +115,36 @@ namespace Lexer
       notNewLine : Char -> Bool
       notNewLine c = not $ elem c (unpack "\r\n")
 
+  whitespace : Grammar Char True ()
+  whitespace = space <|> comma <|> comment
 
-  ignore : Grammar Char True ()
-  ignore = spaces <|> comment
+  ||| Parse one or more whitespace character
+  spaces : Grammar Char True ()
+  spaces = skip $ some whitespace
+
+  ||| Parse zero or more whitespace characters
+  maybeSpaces : Grammar Char False ()
+  maybeSpaces = skip $ many whitespace
+
+  isMalSpace : Char -> Bool
+  isMalSpace c = isSpace c || c == ','
+
+  symbolChar : Grammar Char True Char
+  symbolChar = terminal' (\c => not (isSpecial c || isMalSpace c || c == '"' || c == ',' || c == ';' || c == '^'))
+
 
   numOrSym : Grammar Char True Token
   numOrSym = do res <- some symbolChar
-                pure $ toToken (pack res) -- XXX: rewriting this as map (toToken . pack) (some symbolChar) does not work
+                pure $ toToken res -- XXX: rewriting this as map (toToken . pack) (some symbolChar) does not work
     where
-      toToken : String -> Token
-      toToken acc = case parseInteger acc of
-                         Just n => TNum n
-                         Nothing => TSym acc
-
-      symbolChar : Grammar Char True Char
-      symbolChar = terminal' (\c => not (isSpecial c || isSpace c || c == '"'))
-
+      toToken : List Char -> Token
+      toToken acc =
+        let accStr = (pack acc) in
+            case parseInteger accStr of
+                 Just n => if any isDigit acc
+                           then TNum n
+                           else TSym accStr
+                 Nothing => TSym accStr
 
   escapeChar : Char -> Char
   escapeChar 'r' = '\r'
@@ -126,9 +153,8 @@ namespace Lexer
   escapeChar 'b' = '\b'
   escapeChar c   = c
 
-
   string : Grammar Char True Token
-  string = do exactly '"' ()
+  string = do skip '"'
               stringRest []
     where
       stringRest : List Char -> Grammar Char True Token
@@ -154,7 +180,8 @@ namespace Lexer
             deref <|>
             quote <|>
             unquote <|>
-            quasiquote
+            quasiquote <|>
+            caret
 
   ||| All tokens
   token : Grammar Char True Token
@@ -163,18 +190,18 @@ namespace Lexer
   -- TODO clean this one up
   ||| Token sequence.
   tokens : Grammar Char True (List Token)
-  tokens = stringEof <|> string' <|> t1  <|> nsStringEof <|> nsString <|> nsWs <|> special' <|> nsEof <|> specialEof <|> nsSpecialEof
+  tokens = stringEof <|> string' <|> nsSpecial  <|> nsStringEof <|> nsString <|> nsWs <|> special' <|> nsEof <|> specialEof <|> nsSpecialEof
     where
       skipws : Grammar Char c oty -> Grammar Char c oty
       skipws g = seq maybeSpaces (const g)
       eofPure : ty -> Grammar Char False ty
       eofPure a = map (const a) (skipws eof)
 
-      t1 : Grammar Char True (List Token)
-      t1 = do sy <- skipws numOrSym
-              sp <- skipws special
-              res <- tokens
-              pure $ sy :: sp :: res
+      nsSpecial : Grammar Char True (List Token)
+      nsSpecial = do sy <- skipws numOrSym
+                     sp <- skipws special
+                     res <- tokens
+                     pure $ sy :: sp :: res
 
       nsString : Grammar Char True (List Token)
       nsString = do sy <- skipws numOrSym
@@ -184,7 +211,7 @@ namespace Lexer
 
       nsWs : Grammar Char True (List Token)
       nsWs = do sy <- skipws numOrSym
-                space
+                spaces
                 res <- tokens
                 pure $ sy :: res
 
@@ -221,14 +248,6 @@ namespace Lexer
                    pure $ s::res
 
 namespace Parser
-  data MalType = MInt Integer
-               | MStr String
-               | MSym String
-               | MNil
-               | MList (List MalType)
-
-
-
   atom : Grammar Token True MalType
   atom = astring <|> ans
     where
@@ -244,39 +263,88 @@ namespace Parser
                                  _ => Nothing)
 
   openParen : Grammar Token True ()
-  openParen = exactly TOpenParen ()
+  openParen = skip TOpenParen
 
   closeParen : Grammar Token True ()
   closeParen = exactly TCloseParen ()
 
   mutual
-    list0 : Grammar Token True MalType
-    list0 = do closeParen
-               pure $ MList []
-
-    listn : Grammar Token True MalType
-    listn = do contents <- some form
-               closeParen
-               pure $ MList contents
-
-    list : Grammar Token True MalType
-    list = do openParen
-              (list0 <|> listn)
-
-    -- XXX: NOT TOTAL
+    -- XXX: The following definition is not total according to the idris totality checker
     -- list = do openParen
     --           res <- many form
     --           closeParen
     --           pure $ MList res
 
-    form : Grammar Token True MalType
-    form = atom <|> list
+    -- Separating the rest of the list in a separate parser seems to do the trick
+    delimitedRest : Token -> (List MalType -> MalType) -> Grammar Token True MalType
+    delimitedRest closeDelim ctor  = do contents <- many form
+                                        skip closeDelim
+                                        pure $ ctor contents
 
+    delimited : (opDelim : Token) -> (clDelim : Token) -> (List MalType -> MalType) -> Grammar Token True MalType
+    delimited opDelim clDelim ctor = do skip opDelim
+                                        delimitedRest clDelim ctor
+
+    list : Grammar Token True MalType
+    list = delimited TOpenParen TCloseParen MList
+
+    vector : Grammar Token True MalType
+    vector = delimited TOpenBracket TCloseBracket MVec
+
+    mapLit : Grammar Token True MalType
+    mapLit = do skip TOpenBrace
+                mapLitRest
+      where
+        keyValue : Grammar Token True (MalType, MalType)
+        keyValue = do k <- form
+                      v <- form
+                      pure (k, v)
+
+        mapLitRest : Grammar Token True MalType
+        mapLitRest = do kvs <- many keyValue
+                        skip TCloseBrace
+                        pure $ MMap kvs
+
+    applyIf : Token -> String -> Grammar Token True MalType
+    applyIf t symname = do skip t
+                           f <- form
+                           pure $ MList [MSym symname, f]
+
+
+    quotedForm : Grammar Token True MalType
+    quotedForm = applyIf TQuote "quote"
+
+    quasiQuotedForm : Grammar Token True MalType
+    quasiQuotedForm = applyIf TQuasiQuote "quasiquote"
+
+    unquoteForm : Grammar Token True MalType
+    unquoteForm = applyIf TUnquote "unquote"
+
+    derefForm : Grammar Token True MalType
+    derefForm = applyIf TDeref "deref"
+
+    spliceUnquote : Grammar Token True MalType
+    spliceUnquote = do skip TUnquote
+                       applyIf TDeref "splice-unquote"
+
+    withMeta : Grammar Token True MalType
+    withMeta = do skip TCaret
+                  m <- form
+                  f <- form
+                  pure $ MList [MSym "with-meta", f, m]
+
+
+    form : Grammar Token True MalType
+    form = atom <|> list <|> vector <|> mapLit <|> withMeta <|> quotedForm <|> spliceUnquote <|> quasiQuotedForm <|> quasiQuotedForm <|> unquoteForm <|> derefForm
+
+export
 readString : String -> MalType
 readString input = case parse tokens (unpack input) of
-                        (Left l) => MNil
+                        (Left (Error msg [])) => MError "Error: unexpected end of input."
+                        (Left (Error msg (x :: xs))) => MError $ "Error: unexpected end of input " ++ (show msg)
                         (Right (ts, morechars)) => case parse form ts of
-                                                        (Left l) => MNil
+                                                        (Left (Error msg' [])) => MError $ "Error: unexpected end of input."
+                                                        (Left (Error msg' (x :: xs))) => MError $ "Error: unexpected end of input. " ++ msg' ++ "\nRemaining input: " ++ (show (x::xs))
                                                         (Right (malData, b)) => malData
 
 testInput : String
@@ -294,3 +362,8 @@ test = case parse tokens (unpack testInput) of
     expectedResult = [TOpenParen, TSym "foo", TSym "bar", TSym "baz", TSym ":foo", TNum 123, TUnquote, TDeref,
                       TSym "!!", TOpenParen, TQuote, TQuasiQuote, TOpenParen, TSym "antani", TCloseParen,
                       TSym "123antani", TSym "antani123", TSym "1+", TCloseParen, TCloseParen, TStr "foobar", TSym "baz"]
+
+partial
+tokenize : String -> List Token
+tokenize x = case parse tokens (unpack x) of
+                  (Right (a, b)) => a

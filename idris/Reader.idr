@@ -171,6 +171,16 @@ namespace Lexer
       skipws : Grammar Char c oty -> Grammar Char c oty
       skipws g = do maybeSpaces
                     g
+      eofPure : ty -> Grammar Char False ty
+      eofPure a = map (const a) (skipws eof)
+
+      seq' : (lst : List (Grammar Char True Token)) ->
+             Grammar Char
+                     (case lst of
+                           [] => False
+                           _ => True)
+                     (List Token)
+
       t1 : Grammar Char True (List Token)
       t1 = do sy <- skipws numOrSym
               sp <- skipws special
@@ -196,30 +206,25 @@ namespace Lexer
 
       nsEof : Grammar Char True (List Token)
       nsEof = do sy <- skipws numOrSym
-                 skipws eof
-                 pure [sy]
+                 eofPure [sy]
 
       specialEof : Grammar Char True (List Token)
       specialEof = do sp <- skipws special
-                      skipws eof
-                      pure [sp]
+                      eofPure [sp]
 
       nsSpecialEof : Grammar Char True (List Token)
       nsSpecialEof = do sy <- skipws numOrSym
                         sp <- skipws special
-                        skipws eof
-                        pure [sy, sp]
+                        eofPure [sy, sp]
 
       nsStringEof : Grammar Char True (List Token)
       nsStringEof = do sy <- skipws numOrSym
                        st <- skipws string
-                       skipws eof
-                       pure [sy, st]
+                       eofPure [sy, st]
 
       stringEof : Grammar Char True (List Token)
       stringEof = do s <- skipws string
-                     skipws eof
-                     pure [s]
+                     eofPure [s]
 
       string' : Grammar Char True (List Token)
       string' = do s <- skipws string

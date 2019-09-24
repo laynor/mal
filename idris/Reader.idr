@@ -37,9 +37,6 @@ namespace Lexer
     (==) (TSym x) (TSym y) = x == y
     (==) _ _ = False
 
-  Show Token where
-    show token = ?rhs
-
   ||| Matches MAL special Characters (which are tokens on their own)
   isSpecial : Char -> Bool
   isSpecial x = elem x (unpack "(){}[]~'`@")
@@ -111,7 +108,7 @@ namespace Lexer
 
   numOrSym : Grammar Char True Token
   numOrSym = do res <- some symbolChar
-                pure $ toToken (pack res) -- rewriting this as map (toToken . pack) (some symbolChar) does not work
+                pure $ toToken (pack res) -- XXX: rewriting this as map (toToken . pack) (some symbolChar) does not work
     where
       toToken : String -> Token
       toToken acc = case parseInteger acc of
@@ -223,7 +220,64 @@ namespace Lexer
                    res <- tokens
                    pure $ s::res
 
+namespace Parser
+  data MalType = MInt Integer
+               | MStr String
+               | MSym String
+               | MNil
+               | MList (List MalType)
 
+
+
+  atom : Grammar Token True MalType
+  atom = astring <|> ans
+    where
+      astring : Grammar Token True MalType
+      astring = terminal (\x => case x of
+                                     TStr x => Just (MStr x)
+                                     _ => Nothing)
+
+      ans : Grammar Token True MalType
+      ans = terminal (\x => case x of
+                                 TSym x => pure $ MSym x
+                                 TNum x => pure $ MInt x
+                                 _ => Nothing)
+
+  openParen : Grammar Token True ()
+  openParen = exactly TOpenParen ()
+
+  closeParen : Grammar Token True ()
+  closeParen = exactly TCloseParen ()
+
+  mutual
+    list0 : Grammar Token True MalType
+    list0 = do closeParen
+               pure $ MList []
+
+    listn : Grammar Token True MalType
+    listn = do contents <- some form
+               closeParen
+               pure $ MList contents
+
+    list : Grammar Token True MalType
+    list = do openParen
+              (list0 <|> listn)
+
+    -- XXX: NOT TOTAL
+    -- list = do openParen
+    --           res <- many form
+    --           closeParen
+    --           pure $ MList res
+
+    form : Grammar Token True MalType
+    form = atom <|> list
+
+readString : String -> MalType
+readString input = case parse tokens (unpack input) of
+                        (Left l) => MNil
+                        (Right (ts, morechars)) => case parse form ts of
+                                                        (Left l) => MNil
+                                                        (Right (malData, b)) => malData
 
 testInput : String
 testInput = "(foo bar baz :foo 123 ~@!!('`(antani) 123antani antani123 1+))\"foobar\"baz"

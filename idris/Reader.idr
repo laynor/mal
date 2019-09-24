@@ -173,13 +173,6 @@ namespace Lexer
       eofPure : ty -> Grammar Char False ty
       eofPure a = map (const a) (skipws eof)
 
-      seq' : (lst : List (Grammar Char True Token)) ->
-             Grammar Char
-                     (case lst of
-                           [] => False
-                           _ => True)
-                     (List Token)
-
       t1 : Grammar Char True (List Token)
       t1 = do sy <- skipws numOrSym
               sp <- skipws special

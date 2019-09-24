@@ -169,8 +169,7 @@ namespace Lexer
   tokens = stringEof <|> string' <|> t1  <|> nsStringEof <|> nsString <|> nsWs <|> special' <|> nsEof <|> specialEof <|> nsSpecialEof
     where
       skipws : Grammar Char c oty -> Grammar Char c oty
-      skipws g = do maybeSpaces
-                    g
+      skipws g = seq maybeSpaces (const g)
       eofPure : ty -> Grammar Char False ty
       eofPure a = map (const a) (skipws eof)
 
@@ -219,7 +218,7 @@ namespace Lexer
 
       nsStringEof : Grammar Char True (List Token)
       nsStringEof = do sy <- skipws numOrSym
-                       st <- skipws string
+                       st <- (skipws string)
                        eofPure [sy, st]
 
       stringEof : Grammar Char True (List Token)

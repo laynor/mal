@@ -2,6 +2,7 @@ module Mal.Parser
 
 
 import Text.Parser
+import Data.List.Views
 
 %default total
 
@@ -46,3 +47,18 @@ namespace SkipFn
   export
   skip : (ity -> Bool) -> Grammar ity True ()
   skip pred = skip $ terminal' pred
+
+export
+seq' : (lst : List (Grammar Char True ty)) ->
+       Grammar Char
+               (case lst of
+                     [] => False
+                     _ => True)
+               (List ty)
+seq' [] = pure []
+seq' (x :: xs) = seq x (\x => map (x::) (seq' xs))
+
+
+export
+(.) : Grammar ity c oty -> Grammar ity c' oty' -> Grammar ity (c || Delay c') (oty, oty')
+(.) l r = seq l (\lt => map (\rt => (lt, rt)) r)

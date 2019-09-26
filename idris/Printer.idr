@@ -3,27 +3,34 @@ import Core
 
 %default total
 
-public export
+export
 spaceSeparated : List String -> String
 spaceSeparated xs = trim $ foldr (\x, acc => x ++ " " ++ acc) "" xs
 
-public export
+
+
+export
 delimited : String -> List String -> String -> String
 delimited op xs cl = let contents = spaceSeparated xs in
                          op ++ contents ++ cl
 
 
-public export total
-printString : MalType -> String
-printString (MError x) = x
-printString (MInt x) = show x
-printString (MStr x) = show x
-printString (MSym x) = x
-printString MNil = "()"
-printString (MList xs) = let elems = (map (\x => printString (assert_smaller (MList xs) x)) xs) in
-                             delimited "(" elems ")"
-printString (MVec xs) = let elems = assert_total (map printString xs) in
-                            delimited "["  elems  "]"
-printString (MMap xs) = let elems = assert_total (map (\(k, v) => printString k ++ " " ++ printString v)
-                                                      xs)  in
-                            delimited "{" elems "}"
+export
+Show MalVal where
+  show (Mv TInt x) = show x
+  show (Mv TStr x) = show x
+  show (Mv TSym x) = x
+  show (Mv TList x) = let elems = assert_total $ map show x in
+                          "(" ++ spaceSeparated elems ++ ")"
+  show (Mv TFn x) = "<Function>"
+  show (Mv TVec x) = let elems = assert_total $ map show x in
+                         "[" ++ spaceSeparated elems ++ "]"
+
+  show (Mv TMap x) = let elems = assert_total $ map (\(k,v) => show k ++ " " ++ show v) x in
+                         "{" ++ spaceSeparated elems ++ "}"
+  show (Mv TErr x) = x
+
+
+export
+printString : MalVal -> String
+printString = show

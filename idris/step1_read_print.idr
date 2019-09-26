@@ -5,13 +5,13 @@ import Printer
 
 %default total
 
-read : String -> MalType
+read : String -> MalVal
 read x = readString x
 
-print : MalType -> String
+print : MalVal -> String
 print x = printString x
 
-eval : MalType -> MalType
+eval : MalVal -> MalVal
 eval x = x
 
 rep : String -> String

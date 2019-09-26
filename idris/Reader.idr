@@ -8,52 +8,52 @@ import Core
 %default total
 
 namespace Lexer
-  data Token = TOpenParen
-             | TCloseParen
-             | TOpenBracket
-             | TCloseBracket
-             | TOpenBrace
-             | TCloseBrace
-             | TQuote
-             | TQuasiQuote
-             | TUnquote
-             | TDeref
-             | TCaret
-             | TStr String
-             | TNum Integer
-             | TSym String
+  data Token = TkOpenParen
+             | TkCloseParen
+             | TkOpenBracket
+             | TkCloseBracket
+             | TkOpenBrace
+             | TkCloseBrace
+             | TkQuote
+             | TkQuasiQuote
+             | TkUnquote
+             | TkDeref
+             | TkCaret
+             | TkStr String
+             | TkNum Integer
+             | TkSym String
   Show Token where
-    show TCaret = "TCaret"
-    show TOpenParen = "TOpenParen"
-    show TCloseParen = "TCloseParen"
-    show TOpenBracket = "TOpenBracket"
-    show TCloseBracket = "TCloseBracket"
-    show TOpenBrace = "TOpenBrace"
-    show TCloseBrace = "TCloseBrace"
-    show TQuote = "TQuote"
-    show TQuasiQuote = "TQuasiQuote"
-    show TUnquote = "TUnquote"
-    show TDeref = "TDeref"
-    show (TStr x) = ("TStr " ++ show x)
-    show (TNum x) = ("TNum" ++ show x)
-    show (TSym x) = ("TSym" ++ x)
+    show TkCaret = "TkCaret"
+    show TkOpenParen = "TkOpenParen"
+    show TkCloseParen = "TkCloseParen"
+    show TkOpenBracket = "TkOpenBracket"
+    show TkCloseBracket = "TkCloseBracket"
+    show TkOpenBrace = "TkOpenBrace"
+    show TkCloseBrace = "TkCloseBrace"
+    show TkQuote = "TkQuote"
+    show TkQuasiQuote = "TkQuasiQuote"
+    show TkUnquote = "TkUnquote"
+    show TkDeref = "TkDeref"
+    show (TkStr x) = ("TkStr " ++ show x)
+    show (TkNum x) = ("TkNum" ++ show x)
+    show (TkSym x) = ("TkSym" ++ x)
 
   Eq Token where
-    (==) TCaret TCaret = True
-    (==) TOpenParen TOpenParen = True
-    (==) TCloseParen TCloseParen = True
-    (==) TOpenBracket TOpenBracket = True
-    (==) TCloseBracket TCloseBracket = True
-    (==) TOpenBrace TOpenBrace = True
-    (==) TCloseBrace TCloseBrace = True
-    (==) TQuote TQuote = True
-    (==) TQuasiQuote TQuasiQuote = True
-    (==) TUnquote TUnquote = True
-    (==) TDeref TDeref = True
-    (==) (TStr x) (TStr y) = x == y
-    (==) (TNum x) (TNum y) = x == y
-    (==) (TSym x) (TSym y) = x == y
-    (==) _ _ = False
+    (==)  TkCaret         TkCaret         =       True
+    (==)  TkOpenParen     TkOpenParen     =       True
+    (==)  TkCloseParen    TkCloseParen    =       True
+    (==)  TkOpenBracket   TkOpenBracket   =       True
+    (==)  TkCloseBracket  TkCloseBracket  =       True
+    (==)  TkOpenBrace     TkOpenBrace     =       True
+    (==)  TkCloseBrace    TkCloseBrace    =       True
+    (==)  TkQuote         TkQuote         =       True
+    (==)  TkQuasiQuote    TkQuasiQuote    =       True
+    (==)  TkUnquote       TkUnquote       =       True
+    (==)  TkDeref         TkDeref         =       True
+    (==)  (TkStr x)       (TkStr  y)      =  x  ==  y
+    (==)  (TkNum x)       (TkNum  y)      =  x  ==  y
+    (==)  (TkSym x)       (TkSym  y)      =  x  ==  y
+    (==)  _               _               =       False
 
   ||| Matches MAL special Characters (which are tokens on their own)
   isSpecial : Char -> Bool
@@ -63,49 +63,49 @@ namespace Lexer
 
   ||| Parse an open paren token
   openParen : Grammar Char True Token
-  openParen = exactly '(' TOpenParen
+  openParen = exactly '(' TkOpenParen
 
   ||| Parse an open bracket token
   openBracket : Grammar Char True Token
-  openBracket = exactly '[' TOpenBracket
+  openBracket = exactly '[' TkOpenBracket
 
   ||| Parse an open brace token
   openBrace : Grammar Char True Token
-  openBrace = exactly '{' TOpenBrace
+  openBrace = exactly '{' TkOpenBrace
 
   ||| Parse a close paren token
   closeParen : Grammar Char True Token
-  closeParen = exactly ')' TCloseParen
+  closeParen = exactly ')' TkCloseParen
 
   ||| Parse an close bracket token
   closeBracket : Grammar Char True Token
-  closeBracket = exactly ']' TCloseBracket
+  closeBracket = exactly ']' TkCloseBracket
 
   ||| Parse an close brace token
   closeBrace : Grammar Char True Token
-  closeBrace = exactly '}' TCloseBrace
+  closeBrace = exactly '}' TkCloseBrace
 
   ||| Parse a deref (@) token
   deref : Grammar Char True Token
-  deref = exactly '@' TDeref
+  deref = exactly '@' TkDeref
 
   ||| Parse a quote (') token
   quote : Grammar Char True Token
-  quote = exactly '\'' TQuote
+  quote = exactly '\'' TkQuote
 
   ||| Parse an unquote (~) token
   unquote : Grammar Char True Token
-  unquote = exactly '~' TUnquote
+  unquote = exactly '~' TkUnquote
 
   ||| Parse a quasiquote (`) token
   quasiquote : Grammar Char True Token
-  quasiquote = exactly '`' TQuasiQuote
+  quasiquote = exactly '`' TkQuasiQuote
 
   comma : Grammar Char True ()
   comma = skip ','
 
   caret : Grammar Char True Token
-  caret = exactly '^' TCaret
+  caret = exactly '^' TkCaret
 
   ||| Parse a comment
   comment : Grammar Char True ()
@@ -132,7 +132,6 @@ namespace Lexer
   symbolChar : Grammar Char True Char
   symbolChar = terminal' (\c => not (isSpecial c || isMalSpace c || c == '"' || c == ',' || c == ';' || c == '^'))
 
-
   numOrSym : Grammar Char True Token
   numOrSym = do res <- some symbolChar
                 pure $ toToken res -- XXX: rewriting this as map (toToken . pack) (some symbolChar) does not work
@@ -142,9 +141,9 @@ namespace Lexer
         let accStr = (pack acc) in
             case parseInteger accStr of
                  Just n => if any isDigit acc
-                           then TNum n
-                           else TSym accStr
-                 Nothing => TSym accStr
+                           then TkNum n
+                           else TkSym accStr
+                 Nothing => TkSym accStr
 
   escapeChar : Char -> Char
   escapeChar 'r' = '\r'
@@ -161,7 +160,7 @@ namespace Lexer
       stringRest acc = do firstChar <- peek
                           case firstChar of
                             '"' => do any
-                                      pure $ TStr (pack acc)
+                                      pure $ TkStr (pack acc)
                             '\\' => do any
                                        c <- any
                                        stringRest (acc ++ [escapeChar c])
@@ -248,25 +247,25 @@ namespace Lexer
                    pure $ s::res
 
 namespace Parser
-  atom : Grammar Token True MalType
+  atom : Grammar Token True MalVal
   atom = astring <|> ans
     where
-      astring : Grammar Token True MalType
+      astring : Grammar Token True MalVal
       astring = terminal (\x => case x of
-                                     TStr x => Just (MStr x)
+                                     TkStr x => Just (Mv TStr x)
                                      _ => Nothing)
 
-      ans : Grammar Token True MalType
+      ans : Grammar Token True MalVal
       ans = terminal (\x => case x of
-                                 TSym x => pure $ MSym x
-                                 TNum x => pure $ MInt x
+                                 TkSym x => pure $ Mv TSym x
+                                 TkNum x => pure $ Mv TInt x
                                  _ => Nothing)
 
   openParen : Grammar Token True ()
-  openParen = skip TOpenParen
+  openParen = skip TkOpenParen
 
   closeParen : Grammar Token True ()
-  closeParen = exactly TCloseParen ()
+  closeParen = exactly TkCloseParen ()
 
   mutual
     -- XXX: The following definition is not total according to the idris totality checker
@@ -276,75 +275,75 @@ namespace Parser
     --           pure $ MList res
 
     -- Separating the rest of the list in a separate parser seems to do the trick
-    delimitedRest : Token -> (List MalType -> MalType) -> Grammar Token True MalType
+    delimitedRest : Token -> (List MalVal -> MalVal) -> Grammar Token True MalVal
     delimitedRest closeDelim ctor  = do contents <- many form
                                         skip closeDelim
                                         pure $ ctor contents
 
-    delimited : (opDelim : Token) -> (clDelim : Token) -> (List MalType -> MalType) -> Grammar Token True MalType
+    delimited : (opDelim : Token) -> (clDelim : Token) -> (List MalVal -> MalVal) -> Grammar Token True MalVal
     delimited opDelim clDelim ctor = do skip opDelim
                                         delimitedRest clDelim ctor
 
-    list : Grammar Token True MalType
-    list = delimited TOpenParen TCloseParen MList
+    list : Grammar Token True MalVal
+    list = delimited TkOpenParen TkCloseParen (Mv TList)
 
-    vector : Grammar Token True MalType
-    vector = delimited TOpenBracket TCloseBracket MVec
+    vector : Grammar Token True MalVal
+    vector = delimited TkOpenBracket TkCloseBracket (Mv TVec)
 
-    mapLit : Grammar Token True MalType
-    mapLit = do skip TOpenBrace
+    mapLit : Grammar Token True MalVal
+    mapLit = do skip TkOpenBrace
                 mapLitRest
       where
-        keyValue : Grammar Token True (MalType, MalType)
+        keyValue : Grammar Token True (MalVal, MalVal)
         keyValue = do k <- form
                       v <- form
                       pure (k, v)
 
-        mapLitRest : Grammar Token True MalType
+        mapLitRest : Grammar Token True MalVal
         mapLitRest = do kvs <- many keyValue
-                        skip TCloseBrace
-                        pure $ MMap kvs
+                        skip TkCloseBrace
+                        pure $ Mv TMap kvs
 
-    applyIf : Token -> String -> Grammar Token True MalType
+    applyIf : Token -> String -> Grammar Token True MalVal
     applyIf t symname = do skip t
                            f <- form
-                           pure $ MList [MSym symname, f]
+                           pure $ Mv TList [Mv TSym symname, f]
 
 
-    quotedForm : Grammar Token True MalType
-    quotedForm = applyIf TQuote "quote"
+    quotedForm : Grammar Token True MalVal
+    quotedForm = applyIf TkQuote "quote"
 
-    quasiQuotedForm : Grammar Token True MalType
-    quasiQuotedForm = applyIf TQuasiQuote "quasiquote"
+    quasiQuotedForm : Grammar Token True MalVal
+    quasiQuotedForm = applyIf TkQuasiQuote "quasiquote"
 
-    unquoteForm : Grammar Token True MalType
-    unquoteForm = applyIf TUnquote "unquote"
+    unquoteForm : Grammar Token True MalVal
+    unquoteForm = applyIf TkUnquote "unquote"
 
-    derefForm : Grammar Token True MalType
-    derefForm = applyIf TDeref "deref"
+    derefForm : Grammar Token True MalVal
+    derefForm = applyIf TkDeref "deref"
 
-    spliceUnquote : Grammar Token True MalType
-    spliceUnquote = do skip TUnquote
-                       applyIf TDeref "splice-unquote"
+    spliceUnquote : Grammar Token True MalVal
+    spliceUnquote = do skip TkUnquote
+                       applyIf TkDeref "splice-unquote"
 
-    withMeta : Grammar Token True MalType
-    withMeta = do skip TCaret
+    withMeta : Grammar Token True MalVal
+    withMeta = do skip TkCaret
                   m <- form
                   f <- form
-                  pure $ MList [MSym "with-meta", f, m]
+                  pure $ Mv TList [Mv TSym "with-meta", f, m]
 
 
-    form : Grammar Token True MalType
+    form : Grammar Token True MalVal
     form = atom <|> list <|> vector <|> mapLit <|> withMeta <|> quotedForm <|> spliceUnquote <|> quasiQuotedForm <|> quasiQuotedForm <|> unquoteForm <|> derefForm
 
 export
-readString : String -> MalType
+readString : String -> MalVal
 readString input = case parse tokens (unpack input) of
-                        (Left (Error msg [])) => MError "Error: unexpected end of input."
-                        (Left (Error msg (x :: xs))) => MError $ "Error: unexpected end of input " ++ (show msg)
+                        (Left (Error msg [])) => Mv TErr "Error: unexpected end of input."
+                        (Left (Error msg (x :: xs))) => Mv TErr $ "Error: unexpected end of input " ++ (show msg)
                         (Right (ts, morechars)) => case parse form ts of
-                                                        (Left (Error msg' [])) => MError $ "Error: unexpected end of input."
-                                                        (Left (Error msg' (x :: xs))) => MError $ "Error: unexpected end of input. " ++ msg' ++ "\nRemaining input: " ++ (show (x::xs))
+                                                        (Left (Error msg' [])) => Mv TErr $ "Error: unexpected end of input."
+                                                        (Left (Error msg' (x :: xs))) => Mv TErr $ "Error: unexpected end of input. " ++ msg' ++ "\nRemaining input: " ++ (show (x::xs))
                                                         (Right (malData, b)) => malData
 
 testInput : String
@@ -359,9 +358,9 @@ test = case parse tokens (unpack testInput) of
             (Right (res, _)) => "Incomplete"
   where
     expectedResult : List Token
-    expectedResult = [TOpenParen, TSym "foo", TSym "bar", TSym "baz", TSym ":foo", TNum 123, TUnquote, TDeref,
-                      TSym "!!", TOpenParen, TQuote, TQuasiQuote, TOpenParen, TSym "antani", TCloseParen,
-                      TSym "123antani", TSym "antani123", TSym "1+", TCloseParen, TCloseParen, TStr "foobar", TSym "baz"]
+    expectedResult = [TkOpenParen, TkSym "foo", TkSym "bar", TkSym "baz", TkSym ":foo", TkNum 123, TkUnquote, TkDeref,
+                      TkSym "!!", TkOpenParen, TkQuote, TkQuasiQuote, TkOpenParen, TkSym "antani", TkCloseParen,
+                      TkSym "123antani", TkSym "antani123", TkSym "1+", TkCloseParen, TkCloseParen, TkStr "foobar", TkSym "baz"]
 
 partial
 tokenize : String -> List Token

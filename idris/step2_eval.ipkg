@@ -1,0 +1,6 @@
+package step2_eval
+
+modules = step2_eval, Reader, Parser, Core
+main = step2_eval
+executable = step2_eval
+opts = "-p contrib"

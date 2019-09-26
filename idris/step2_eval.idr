@@ -4,6 +4,7 @@ import Reader
 import Printer
 import Data.Vect
 import Data.Primitives.Views
+import Data.String.Views
 
 %default total
 
@@ -82,7 +83,13 @@ eval (More fuel) env form@(Mv TList elems) =
                                                       Nothing => f' args'
                                                       (Just x) => x
                               Mv t val    => typeError t TFn
-eval (More fuel) env (Mv TSym name) = lookup env name
+
+eval (More fuel) env (Mv TSym name) with (strList name)
+  eval (More fuel) env (Mv TSym "") | SNil = merr "Internal interpreter error: empty symbol"
+  eval (More fuel) env (Mv TSym (strCons x xs)) | (SCons x rec) = case x of
+                                                                       ':' => msym (strCons x xs)  -- keywords
+                                                                       _ => lookup env (strCons x xs)
+
 eval (More fuel) env (Mv TVec elems) = let elems' = map (eval fuel env) elems in
                                            mvec elems'
 eval (More fuel) env (Mv TMap elems) = let eval' = eval fuel env

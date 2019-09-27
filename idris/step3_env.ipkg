@@ -1,0 +1,6 @@
+package step3_env
+
+modules = step3_env, Reader, Parser, Core
+main = step3_env
+executable = step3_env
+opts = "-p contrib"

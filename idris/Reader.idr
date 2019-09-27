@@ -3,6 +3,7 @@ module Reader
 import Text.Parser
 import Data.String
 import Parser
+import Types
 import Core
 
 %default total
@@ -257,8 +258,8 @@ namespace Parser
 
       ans : Grammar Token True MalVal
       ans = terminal (\x => case x of
-                                 TkSym x => pure $ Mv TSym x
-                                 TkNum x => pure $ Mv TInt x
+                                 TkSym x => Just $ Mv TSym x
+                                 TkNum x => Just $ Mv TInt x
                                  _ => Nothing)
 
   openParen : Grammar Token True ()

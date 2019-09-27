@@ -60,15 +60,23 @@ env = [ ("+",  mfun (\args => foldr madd (mint 0) args)),
                                   _ => merr "Type error"))
         ]
 
+pureOk : MalVal -> (env : Env) -> MalIO (CmdResult MalVal) env
+pureOk v e = pure $ Ok v e
 
-eval' : (env : Env) -> MalVal -> MalIO MalVal env
-eval' env v@(Mv TInt val) = pure v
-eval' env v@(Mv TStr val) = pure v
-eval' env v@(Mv TSym name) = case lookup name env of
-                                  Nothing => pure (raise $ "Symbol " ++ name ++ " unbound.")
-                                  (Just x) => pure x
-eval' env v@(Mv TList val) = ?rhs
-eval' env v@(Mv TFn val) = pure v
+eval' : (env : Env) -> (val : MalVal) -> MalIO (CmdResult MalVal) env
+eval' env v@(Mv TInt val) = pureOk v env
+eval' env v@(Mv TStr val) = pureOk v env
+eval' env v@(Mv TSym name) = let msg = "Symbol " ++ name ++ " unbound." in
+                                 case lookup name env of
+                                      Nothing => pure $ Error msg
+                                      (Just x) => pure (Ok x env)
+eval' env v@(Mv TList lst) = case lst of
+                                  [] => pure $ Ok v env
+                                  (fsym :: args) => case eval' env fsym of
+                                                         (Do c f) => do r <- c
+                                                                        ?rhs
+                                                         (Return val) => pure val
+eval' env v@(Mv TFn val) = pure $ Ok v env
 eval' env v@(Mv TVec val) = ?rhs_7
 eval' env v@(Mv TMap val) = ?rhs_8
 eval' env v@(Mv TErr val) = ?rhs_9

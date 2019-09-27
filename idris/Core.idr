@@ -20,12 +20,14 @@ public export
 Show (MalVal -> MalVal) where
   show x = "Function"
 
+public export
 data CmdResult : Type -> Type where
   Ok : ty -> Env -> CmdResult ty
   Error : String -> CmdResult ty
 
 
 interpret' : Env -> MalCmd ty env next -> IO(CmdResult ty)
+interpret' env (Raise msg) = pure (Error msg)
 interpret' env GetLine = do s <- getLine
                             pure $ Ok s env
 interpret' env (PutStr x) = do putStr x
@@ -44,6 +46,7 @@ interpret' env (cmd >>= cont) = do Ok res env' <- interpret' env cmd
 public export
 data Fuel = Dry | More (Lazy Fuel)
 
+export
 interpret  : Fuel -> Env -> MalIO ty env-> IO (CmdResult ty)
 interpret  Dry _ _ = pure (Error "Ran out of fuel")
 interpret (More fuel) env (Return x) = pure $ Ok x env

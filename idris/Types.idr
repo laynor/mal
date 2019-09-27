@@ -73,7 +73,7 @@ mutual
     Lookup : (name : String) -> MalCmd MalVal env (const env)
 
     -- TODO : add last-error to the environment?
-    Raise : String -> MalCmd String env (const env)
+    Raise : String -> MalCmd MalVal env (const env)
 
     GetLine : MalCmd String env (const env)
     PutStr : String -> MalCmd () env (const env)
@@ -86,7 +86,7 @@ mutual
   pure = Pure
 
   export
-  raise : String -> MalCmd String env (const env)
+  raise : String -> MalCmd MalVal env (const env)
   raise = Raise
 
   public export

@@ -48,8 +48,8 @@ interpret  (More fuel ) env (Do cmd cont) = do Ok res env' <- interpret' env cmd
                                                   | Error err => pure (Error err)
                                                pure (Ok res' env'')
 
-interpret (More fuel) env (BindIO x f) = do x' <- interpret fuel env x
-                                            case x' of
-                                              (Ok val env') => let y = f val env' in
-                                                                   interpret fuel env' y
-                                              (Error x) => pure $ Error x
+interpret (More fuel) env (Bind x f) = do x' <- interpret fuel env x
+                                          case x' of
+                                            (Ok val env') => let y = f (val, env') in
+                                                                 interpret fuel env' y
+                                            (Error x) => pure $ Error x

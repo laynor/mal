@@ -20,12 +20,6 @@ public export
 Show (MalVal -> MalVal) where
   show x = "Function"
 
-public export
-data CmdResult : Type -> Type where
-  Ok : ty -> Env -> CmdResult ty
-  Error : String -> CmdResult ty
-
-
 interpret' : Env -> MalCmd ty env next -> IO(CmdResult ty)
 interpret' env (Raise msg) = pure (Error msg)
 interpret' env GetLine = do s <- getLine
@@ -33,10 +27,8 @@ interpret' env GetLine = do s <- getLine
 interpret' env (PutStr x) = do putStr x
                                pure $ Ok () env
 interpret' env (Pure x) = pure (Ok x env)
-interpret' env (Bind name value) = pure $ Ok () ((name, value) :: env)
-interpret' env (Lookup name) = case lookup name env of
-                                    Nothing => pure (Error $ "Unbound name " ++ name ++ ".")
-                                    (Just x) => pure (Ok x env)
+interpret' env (Let name value) = pure $ Ok () ((name, value) :: env)
+interpret' env (Lookup name) = pure (Ok (lookup name env) env)
 interpret' env (cmd >>= cont) = do Ok res env' <- interpret' env cmd
                                       | Error err => pure (Error err)
                                    Ok res' env'' <- interpret' env' (cont res)
@@ -55,3 +47,9 @@ interpret  (More fuel ) env (Do cmd cont) = do Ok res env' <- interpret' env cmd
                                                Ok res' env'' <- interpret fuel env' (cont res)
                                                   | Error err => pure (Error err)
                                                pure (Ok res' env'')
+
+interpret (More fuel) env (BindIO x f) = do x' <- interpret fuel env x
+                                            case x' of
+                                              (Ok val env') => let y = f val env' in
+                                                                   interpret fuel env' y
+                                              (Error x) => pure $ Error x

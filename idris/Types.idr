@@ -49,7 +49,7 @@ mutual
   repr TStr = String
   repr TSym = String
   repr TList = List MalVal
-  repr TFn =  MalCmd MalVal ?rhs ?rhs2
+  repr TFn =  (env : Env) -> (List MalVal) -> MalIO MalVal env
   repr TVec = List MalVal
   repr TMap = List (MalVal, MalVal)
 
@@ -67,10 +67,18 @@ mutual
   assoc : String -> MalVal -> Env -> Env
   assoc name value env = (name, value) :: env
 
+
+  public export
+  data CmdResult : Type -> Type where
+    Ok : ty -> Env -> CmdResult ty
+    Error : String -> CmdResult ty
+
+
+    -- TODO : add last-error to the environment? export
   public export
   data MalCmd : (ty : Type) -> Env -> (ty -> Env) -> Type where
-    Bind : (name : String) -> (value : MalVal) -> MalCmd () env (\b => (name, value) :: env)
-    Lookup : (name : String) -> MalCmd MalVal env (const env)
+    Let : (name : String) -> (value : MalVal) -> MalCmd () env (\b => (name, value) :: env)
+    Lookup : (name : String) -> MalCmd (Maybe MalVal) env (const env)
 
     -- TODO : add last-error to the environment?
     Raise : String -> MalCmd MalVal env (const env)
@@ -91,8 +99,9 @@ mutual
 
   public export
   data MalIO : (ty : Type) -> (env : Env) -> Type where
-    Do : MalCmd a env1 env2fn -> ((res : a) -> Inf(MalIO b (env2fn res))) -> MalIO b env1
     Return : ty -> MalIO ty _
+    BindIO : MalIO a env1 -> ((res : a) -> (env' : Env) -> Inf(MalIO b env')) -> MalIO b env1
+    Do : MalCmd a env1 env2fn -> ((res : a) -> Inf(MalIO b (env2fn res))) -> MalIO b env1
 
   namespace MalIO
     export
@@ -125,10 +134,9 @@ export
 mlist : List MalVal -> MalVal
 mlist = Mv TList
 
---     repr TFn =  (env : Env) -> (next : MalVal -> Env) -> MalCmd MalVal initial next
 export
-mfun : (List MalVal -> MalVal) -> MalVal
-mfun f = Mv TFn ?rhs
+mfun : ((env : Env) -> (List MalVal) -> MalIO MalVal env) -> MalVal
+mfun f = Mv TFn f
 
 export
 mmap : List (MalVal, MalVal) -> MalVal

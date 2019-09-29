@@ -9,12 +9,6 @@ import Data.String.Views
 
 %default total
 
-read : String -> MalVal
-read x = readString x
-
-print : MalVal -> String
-print x = printString x
-
 atomp : MalVal -> Bool
 atomp (Mv TList val) = True
 atomp _ = False
@@ -45,85 +39,106 @@ mdiv (Mv TInt x) (Mv TInt y) with (divides x y)
 mdiv (Mv t x) (Mv t' y)  = typeError (wrong TInt t t') TInt
 
 env : Env
-env = [ ("+",  mfun (\args => foldr madd (mint 0) args)),
+env = [ ("+",  mfun (\env, args => Return $ foldr madd (mint 0) args)),
 
-        ("-", mfun (\args => case args of
-                                  [] => merr "Not enough arguments."
-                                  (Mv TInt x) :: xs => foldl msub (mint x) xs
-                                  _ => merr "Type error")),
+        ("-", mfun (\env, args => Return $ case args of
+                                                [] => merr "Not enough arguments."
+                                                (Mv TInt x) :: xs => foldl msub (mint x) xs
+                                                _ => merr "Type error")),
 
-        ("*", mfun (\args => foldr mmul (mint 1) args)),
+        ("*", mfun (\env, args => Return $ foldr mmul (mint 1) args)),
 
-        ("/", mfun (\args => case args of
-                                  [] => merr "Not enough arguments."
-                                  (Mv TInt x) :: xs => foldl mdiv (mint x) xs
-                                  _ => merr "Type error"))
+        ("/", mfun (\env, args => Return $ case args of
+                                                [] => merr "Not enough arguments."
+                                                (Mv TInt x) :: xs => foldl mdiv (mint x) xs
+                                                _ => merr "Type error"))
         ]
 
 pureOk : MalVal -> (env : Env) -> MalIO (CmdResult MalVal) env
 pureOk v e = pure $ Ok v e
 
-eval' : (env : Env) -> (val : MalVal) -> MalIO (CmdResult MalVal) env
-eval' env v@(Mv TInt val) = pureOk v env
-eval' env v@(Mv TStr val) = pureOk v env
-eval' env v@(Mv TSym name) = let msg = "Symbol " ++ name ++ " unbound." in
-                                 case lookup name env of
-                                      Nothing => pure $ Error msg
-                                      (Just x) => pure (Ok x env)
-eval' env v@(Mv TList lst) = case lst of
-                                  [] => pure $ Ok v env
-                                  (fsym :: args) => case eval' env fsym of
-                                                         (Do c f) => do r <- c
-                                                                        ?rhs
-                                                         (Return val) => pure val
-eval' env v@(Mv TFn val) = pure $ Ok v env
-eval' env v@(Mv TVec val) = ?rhs_7
-eval' env v@(Mv TMap val) = ?rhs_8
-eval' env v@(Mv TErr val) = ?rhs_9
+
+eval' : (env1 : Env) -> (val : MalVal) -> MalIO MalVal env1
+eval' env1 v@(Mv TInt val)  = pure v
+eval' env1 v@(Mv TStr val)  = pure v
+eval' env1 v@(Mv TSym name)  = do res <- Lookup name
+                                  case res of
+                                    Just val => pure val
+                                    Nothing => let msg = "Symbol " ++ name ++ " unbound." in
+                                                   pure (merr msg)
+eval' env1 v@(Mv TList lst) = case lst of
+                                   [] => pure v
+                                   (fsym :: args) => BindIO (eval' env1 (assert_smaller v fsym))
+                                                            (\fsym', env2 => case fsym' of
+                                                                                  (Mv TInt val) => Return (typeError TInt TFn)
+                                                                                  (Mv TStr val) => Return (typeError TStr TFn)
+                                                                                  (Mv TSym val) => Return (typeError TSym TFn)
+                                                                                  (Mv TList val) => Return (typeError TList TFn)
+                                                                                  (Mv TFn f') => BindIO (evalArgs env2 args)
+                                                                                                        (\args', env3 => f' env3 args')
+                                                                                  (Mv TVec val) => Return (typeError TVec TFn)
+                                                                                  (Mv TMap val) => Return (typeError TMap TFn)
+                                                                                  (Mv TErr val) => Return (typeError TErr TFn))
+  where
+    evalArgs : (env : Env) -> List MalVal -> MalIO (List MalVal) env
+    evalArgs env [] = Return []
+    evalArgs env (x :: xs) = BindIO (eval' env x)
+                                    (\x', env' => BindIO (evalArgs env' xs)
+                                                         (\xs', env'' => Return ((x' :: xs'))))
 
 
-eval : Fuel -> Env -> MalVal -> MalVal
-eval Dry _ _ = merr "Ran out of fuel - HALTED."
-eval _ _ _ = ?rhs
--- eval (More fuel) env form@(Mv TList elems) =
---   case elems of
---        [] => form
---        (head :: args) => case eval fuel env head of
---                               err@(Mv TErr msg) => err
---                               Mv TFn f'   => let args' = map (eval fuel env) args in
---                                                  case find (\x => case x of
---                                                                        (Mv TErr val) => True
---                                                                        (Mv _    val) => False)
---                                                            args' of
---                                                       Nothing => f' args'
---                                                       (Just x) => x
---                               Mv t val    => typeError t TFn
 
--- eval (More fuel) env (Mv TSym name) with (strList name)
---   eval (More fuel) env (Mv TSym "") | SNil = merr "Internal interpreter error: empty symbol"
---   eval (More fuel) env (Mv TSym (strCons x xs)) | (SCons x rec) = case x of
---                                                                        ':' => msym (strCons x xs)  -- keywords
---                                                                        _ => lookup env (strCons x xs)
 
--- eval (More fuel) env (Mv TVec elems) = let elems' = map (eval fuel env) elems in
---                                            mvec elems'
--- eval (More fuel) env (Mv TMap elems) = let eval' = eval fuel env
---                                            elems' = map (\(x, y) => (eval' x, eval' y)) elems in
---                                            mmap elems'
--- eval (More fuel) env x = x
+eval' env1 v@(Mv TFn val)  = pure v
+eval' env1 v@(Mv TVec exprs) = BindIO (evalExprs env1 exprs)
+                                      (\vals, env => Return (Mv TVec vals))
+  where
+    evalExprs : (env : Env) -> List MalVal -> MalIO (List MalVal) env
+    evalExprs env [] = Return []
+    evalExprs env (x :: xs) = BindIO (eval' env x)
+                                     (\x', env' => BindIO (evalExprs env' xs)
+                                                          (\xs', env'' => Return ((x' :: xs'))))
+
+eval' env1 v@(Mv TMap pairs) = BindIO (evalPairs env1 pairs)
+                                      (\pairs', env2 => Return (Mv TMap pairs'))
+  where
+    evalPairs : (env : Env) -> List (MalVal, MalVal) -> MalIO (List (MalVal, MalVal)) env
+    evalPairs env [] = Return []
+    evalPairs env ((k,v) :: xs) = BindIO (eval' env k)
+                                         (\k', env' => BindIO (eval' env' v)
+                                                              (\v', env'' => BindIO (evalPairs env'' xs)
+                                                                                    (\xs', env''' => Return (((k', v') :: xs')))))
+eval' env1 v@(Mv TErr val) = Return v
+
+
+read : String -> MalVal
+read x = readString x
+
+print : MalVal -> String
+print x = printString x
 
 partial
-rep : Fuel -> String -> String
-rep fuel = print . eval fuel env . read
+rep : Fuel -> Env -> String -> IO(String, Env)
+rep fuel env input = let form = read input in
+                         do res <- interpret fuel env (eval' env form)
+                            case res of
+                              Ok v env' => pure $ (print v, env')
+                              Error err => pure (("ERROR: " ++ err), env)
 
 partial
 main : IO ()
-main = repl "user> " rep'
+main = malRepl "user> " env
   where
     partial
     forever : Fuel
     forever = More forever
 
     partial
-    rep' : String -> String
-    rep' x = rep forever x ++ "\n"
+    malRepl : String -> Env -> IO()
+    malRepl prompt  env = do putStr prompt
+                             input <- getLine
+                             case input of
+                               "(exit)" => putStrLn "Bye"
+                               _ => do (res, env') <- rep forever env input
+                                       putStrLn res
+                                       malRepl prompt env'

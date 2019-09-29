@@ -21,6 +21,7 @@ Show (MalVal -> MalVal) where
   show x = "Function"
 
 interpret' : Env -> MalCmd ty env next -> IO(CmdResult ty)
+interpret' env GetEnv = pure $ Ok env env
 interpret' env (Raise msg) = pure (Error msg)
 interpret' env GetLine = do s <- getLine
                             pure $ Ok s env

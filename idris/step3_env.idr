@@ -51,7 +51,9 @@ env = [ ("+",  mfun (\env, args => pure $ foldr madd (mint 0) args)),
         ("/", mfun (\env, args => pure $ case args of
                                                 [] => merr "Not enough arguments."
                                                 (Mv TInt x) :: xs => foldl mdiv (mint x) xs
-                                                _ => merr "Type error"))
+                                                _ => merr "Type error")),
+        ("set", mfun (\env, args => do Let "foo" (mint 12)
+                                       Return (msym "foo")))
         ]
 
 pureOk : MalVal -> (env : Env) -> MalIO (CmdResult MalVal) env
@@ -64,8 +66,7 @@ eval env1 v@(Mv TStr val)  = pure v
 eval env1 v@(Mv TSym name)  = do res <- Lookup name
                                  case res of
                                    Just val => pure val
-                                   Nothing => let msg = "Symbol " ++ name ++ " unbound." in
-                                                  pure (merr msg)
+                                   Nothing => pure $ merr $ "Symbol " ++ name ++ " unbound."
 
 eval env1 v@(Mv TList lst) = case lst of
                                   [] => pure v

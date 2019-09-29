@@ -79,6 +79,7 @@ mutual
   data MalCmd : (ty : Type) -> Env -> (ty -> Env) -> Type where
     Let : (name : String) -> (value : MalVal) -> MalCmd () env (\b => (name, value) :: env)
     Lookup : (name : String) -> MalCmd (Maybe MalVal) env (const env)
+    GetEnv : MalCmd Env env (const env)
 
     -- TODO : add last-error to the environment?
     Raise : String -> MalCmd MalVal env (const env)

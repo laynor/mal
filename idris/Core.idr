@@ -51,6 +51,6 @@ interpret  (More fuel ) env (Do cmd cont) = do Ok res env' <- interpret' env cmd
 
 interpret (More fuel) env (Bind x f) = do x' <- interpret fuel env x
                                           case x' of
-                                            (Ok val env') => let y = f (val, env') in
+                                            (Ok val env') => let y = f val in
                                                                  interpret fuel env' y
                                             (Error x) => pure $ Error x

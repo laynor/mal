@@ -60,52 +60,59 @@ pureOk : MalVal -> (env : Env) -> MalIO (CmdResult MalVal) env
 pureOk v e = pure $ Ok v e
 
 
-eval : (env1 : Env) -> (val : MalVal) -> MalIO MalVal env1
-eval env1 v@(Mv TInt val)  = pure v
-eval env1 v@(Mv TStr val)  = pure v
-eval env1 v@(Mv TSym name)  = do res <- Lookup name
-                                 case res of
-                                   Just val => pure val
-                                   Nothing => pure $ merr $ "Symbol " ++ name ++ " unbound."
+eval :(val : MalVal) -> MalIO MalVal env1
+eval v@(Mv TInt val)  = pure v
+eval v@(Mv TStr val)  = pure v
+eval v@(Mv TSym name)  = do res <- Lookup name
+                            case res of
+                                 Just val => pure val
+                                 Nothing => pure $ merr $ "Symbol " ++ name ++ " unbound."
 
-eval env1 v@(Mv TList lst) = case lst of
-                                  [] => pure v
-                                  (fsym :: args) => do (fsym', env2) <- eval env1 (assert_smaller v fsym)
-                                                       case fsym' of
-                                                         (Mv TFn f') => do (args', env3) <- evalArgs env2 args
-                                                                           f' env3 args'
-                                                         (Mv t val) => pure (typeError t TFn)
+eval v@(Mv TList lst) = case lst of
+                             [] => pure v
+                             (fsym :: args) => do env1  <- GetEnv
+                                                  ?rhs
+                                                  -- case fsym' of
+                                                  --   (Mv TFn f') => do args' <- evalArgs args
+                                                  --                     ?rhs
+                                                  --                     -- pure (mint 2)
+                                                  --                     -- f' args'
+                                                  --   (Mv t val) => pure (typeError t TFn)
   where
-    evalArgs : (env : Env) -> List MalVal -> MalIO (List MalVal) env
-    evalArgs env [] = pure []
-    evalArgs env (x :: xs) = do (x', env')   <- eval env x
-                                (xs', env'') <- evalArgs env' xs
-                                pure ((x' :: xs'))
+    evalArgs : List MalVal -> MalIO (List MalVal) env12
+    evalArgs [] = pure []
+    evalArgs (x :: xs) = do x'  <- eval x
+                            xs' <- evalArgs xs
+                            pure (x' :: xs')
 
 
 
 
-eval env1 v@(Mv TFn val)  = pure v
-eval env1 v@(Mv TVec exprs) = do (vals, env) <- evalExprs env1 exprs
-                                 pure (Mv TVec vals)
+eval v@(Mv TFn val)  = pure v
+eval v@(Mv TVec exprs) = do vals <- evalExprs exprs
+                            ?rhs
+                            -- pure (Mv TVec vals)
   where
-    evalExprs : (env : Env) -> List MalVal -> MalIO (List MalVal) env
-    evalExprs env [] = pure []
-    evalExprs env (x :: xs) = do (x', env')   <- eval env x
-                                 (xs', env'') <- evalExprs env' xs
-                                 pure (x' :: xs')
+    evalExprs : List MalVal -> MalIO (List MalVal) env12
+    evalExprs [] = pure []
+    evalExprs (x :: xs) = do x'  <- eval x
+                             ?rhs
+                             -- xs' <- evalExprs xs
+                             -- pure (x' :: xs')
 
-eval env1 v@(Mv TMap pairs) = do (pairs', env'') <- evalPairs env1 pairs
-                                 pure (Mv TMap pairs')
+eval v@(Mv TMap pairs) = do pairs' <- evalPairs pairs
+                            ?rhs
+                            -- pure (Mv TMap pairs')
   where
-    evalPairs : (env : Env) -> List (MalVal, MalVal) -> MalIO (List (MalVal, MalVal)) env
-    evalPairs env [] = pure []
-    evalPairs env ((k,v) :: xs) = do (k', env')    <- eval env k
-                                     (v', env'')   <- eval env' v
-                                     (xs', env''') <- evalPairs env'' xs
-                                     pure ((k', v') :: xs')
+    evalPairs : List (MalVal, MalVal) -> MalIO (List (MalVal, MalVal)) env12
+    evalPairs [] = pure []
+    evalPairs ((k,v) :: xs) = do k'  <- eval k
+                                 ?rhs
+                                 -- v'  <- eval v
+                                 -- xs' <- evalPairs xs
+                                 -- pure ((k', v') :: xs')
 
-eval env1 v@(Mv TErr val) = pure v
+eval v@(Mv TErr val) = pure v
 
 
 read : String -> MalVal
@@ -117,10 +124,11 @@ print x = printString x
 partial
 rep : Fuel -> Env -> String -> IO(String, Env)
 rep fuel env input = let form = read input in
-                         do res <- interpret fuel env (eval env form)
-                            case res of
-                              Ok v env' => pure $ (print v, env')
-                              Error err => pure (("ERROR: " ++ err), env)
+                         do res <- interpret fuel env (eval form)
+                            ?rhs
+                            -- case res of
+                            --   Ok v env' => pure $ (print v, env')
+                            --   Error err => pure (("ERROR: " ++ err), env)
 
 partial
 main : IO ()

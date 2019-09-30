@@ -101,7 +101,7 @@ mutual
   public export
   data MalIO : (ty : Type) -> (env : Env) -> Type where
     Return : ty -> MalIO ty _
-    Bind : MalIO a env1 -> ((res : (a, Env)) -> Inf(MalIO b (snd res))) -> MalIO b env1
+    Bind : MalIO a env1 -> (a -> Inf(MalIO b env2)) -> MalIO b env1
     Do : MalCmd a env1 env2fn -> ((res : a) -> Inf(MalIO b (env2fn res))) -> MalIO b env1
 
   namespace MalIO
@@ -110,7 +110,7 @@ mutual
     pure = Return
 
     export
-    (>>=) : MalIO a env1 -> ((res : (a, Env)) -> Inf(MalIO b (snd res))) -> MalIO b env1
+    (>>=) : MalIO a env1 -> (a -> Inf(MalIO b env2)) -> MalIO b env1
     (>>=) = Bind
 
   namespace MalIODo

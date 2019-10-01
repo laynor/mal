@@ -70,14 +70,11 @@ eval v@(Mv TSym name)  = do res <- Lookup name
 
 eval v@(Mv TList lst) = case lst of
                              [] => pure v
-                             (fsym :: args) => do env1  <- GetEnv
-                                                  ?rhs
-                                                  -- case fsym' of
-                                                  --   (Mv TFn f') => do args' <- evalArgs args
-                                                  --                     ?rhs
-                                                  --                     -- pure (mint 2)
-                                                  --                     -- f' args'
-                                                  --   (Mv t val) => pure (typeError t TFn)
+                             (fsym :: args) => do fsym' <- eval (assert_smaller v fsym)
+                                                  case fsym' of
+                                                    (Mv TFn f') =>  do args' <- evalArgs args
+                                                                       f' _ args' -- XXX: I could only make it typecheck passing _ as env
+                                                    (Mv t val) => pure (typeError t TFn)
   where
     evalArgs : List MalVal -> MalIO (List MalVal) env12
     evalArgs [] = pure []
@@ -90,27 +87,23 @@ eval v@(Mv TList lst) = case lst of
 
 eval v@(Mv TFn val)  = pure v
 eval v@(Mv TVec exprs) = do vals <- evalExprs exprs
-                            ?rhs
-                            -- pure (Mv TVec vals)
+                            Return (Mv TVec vals)
   where
     evalExprs : List MalVal -> MalIO (List MalVal) env12
     evalExprs [] = pure []
     evalExprs (x :: xs) = do x'  <- eval x
-                             ?rhs
-                             -- xs' <- evalExprs xs
-                             -- pure (x' :: xs')
+                             xs' <- evalExprs xs
+                             pure (x' :: xs')
 
 eval v@(Mv TMap pairs) = do pairs' <- evalPairs pairs
-                            ?rhs
-                            -- pure (Mv TMap pairs')
+                            pure (Mv TMap pairs')
   where
     evalPairs : List (MalVal, MalVal) -> MalIO (List (MalVal, MalVal)) env12
     evalPairs [] = pure []
     evalPairs ((k,v) :: xs) = do k'  <- eval k
-                                 ?rhs
-                                 -- v'  <- eval v
-                                 -- xs' <- evalPairs xs
-                                 -- pure ((k', v') :: xs')
+                                 v'  <- eval v
+                                 xs' <- evalPairs xs
+                                 pure ((k', v') :: xs')
 
 eval v@(Mv TErr val) = pure v
 
@@ -121,14 +114,17 @@ read x = readString x
 print : MalVal -> String
 print x = printString x
 
+isErr : CmdResult ty -> Bool
+isErr (Ok x xs) = False
+isErr (Error x) = True
+
 partial
 rep : Fuel -> Env -> String -> IO(String, Env)
 rep fuel env input = let form = read input in
-                         do res <- interpret fuel env (eval form)
-                            ?rhs
-                            -- case res of
-                            --   Ok v env' => pure $ (print v, env')
-                            --   Error err => pure (("ERROR: " ++ err), env)
+                         do val <- interpret fuel env (the (MalIO MalVal env) (eval form))
+                            case val of
+                              Ok v env' => pure $ (print v, env')
+                              Error err => pure (("ERROR: " ++ err), env)
 
 partial
 main : IO ()

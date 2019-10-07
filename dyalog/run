@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mapl -b -s Distribution/Mal.dws 2>/dev/null

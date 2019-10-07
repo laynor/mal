@@ -17,13 +17,11 @@
    Fail←0
 
    ⍝ true if ⍵ is an empty array
-   empty←{0≡≢⍵}
+   empty←0≡≢
 
    ⍝ parse eof
-   eof←{
-     empty ⍵: Ok ⍬ ⍵
-              Fail ⍬ ⍵
-   }
+   ⍝ eof←{(empty ⍵) ⍬ ⍵}
+   eof←empty,⍬∘,
 
 
    ⍝ pred terminal : scans and returns one token T if (pred T), fails otherwise
@@ -220,7 +218,7 @@
 
    flt←{(⍺⍺¨⍵)/⍵}
 
-   Special Symbol Number String List Vec Map←⍳7
+   Special Symbol Number String List Vec Map Error←⍳8
 
    isComment←{(1↑⍵)≡';'}
    isWhitespaceOrComment←isWhitespace∨isComment
@@ -267,6 +265,7 @@
      t≡List:   '(',(trim⍕pprint¨ v),')'
      t≡Vec:    '[',(trim⍕pprint¨ v),']'
      t≡Map:    '{',(trim⍕pprint¨ v),'}'
+     t≡Error:  'ERROR: ', v
      'error'                    ⍝ do something better than just returning a string 'error'
    }
 
@@ -274,8 +273,28 @@
    var←(alpha seq (alphaNum many))  flat
    special←{⍵∊'.()λ'}terminal
    ulcTokens←(~isWhitespace) flt map ((var or special or whitespace)many)
-   read←{⍵}
+   read←{
+     s r R←tokens ⍵
+     s: {
+       s r R←mForm ⍵
+       s: r
+       Error 'Parse error'
+     }r
+     Error 'Lexer error'
+   }
    eval←{⍵}
-   print←{⍵}
+   print←pprint
    rep←print∘eval∘read
+
+   ∇R←StartMAL;inp;prompt;res;out
+    prompt←'user> '
+    ⍞←prompt
+    inp←(≢prompt)↓⍞
+    →(inp≡'(exit)')/out
+    res←rep inp
+    ⎕←res
+    StartMAL
+    →0
+    out: 'Bye'
+   ∇
  :EndNamespace

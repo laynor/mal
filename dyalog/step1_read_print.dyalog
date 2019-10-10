@@ -188,9 +188,9 @@
        cc←2↑⍵
 
        0=≢⍵: fail inp
-       c='\':   {cc,⍵} map ∇ 2↓⍵
-       c='"':   Ok '"' (1↓⍵)
-                {c,⍵} map ∇ 1↓⍵
+       c='\': {cc,⍵} map ∇ 2↓⍵
+       c='"': Ok '"' (1↓⍵)
+              {c,⍵} map ∇ 1↓⍵
      }
 
      {∊⍵} map (dquote seq stringRest) ⍵

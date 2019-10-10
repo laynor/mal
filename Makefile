@@ -199,7 +199,7 @@ crystal_STEP_TO_PROG = crystal/$($(1))
 cs_STEP_TO_PROG =      cs/$($(1)).exe
 d_STEP_TO_PROG =       d/$($(1))
 dart_STEP_TO_PROG =    dart/$($(1)).dart
-dyalog_STEP_TO_PROG =  dyalog/Distribution/$($(1)).dws
+dyalog_STEP_TO_PROG =  dyalog/$($(1)).dws
 elisp_STEP_TO_PROG =   elisp/$($(1)).el
 elixir_STEP_TO_PROG =  elixir/lib/mix/tasks/$($(1)).ex
 elm_STEP_TO_PROG =     elm/$($(1)).js
@@ -334,7 +334,7 @@ get_run_prefix = $(strip $(foreach mode,$(call actual_impl,$(1))_MODE, \
 # Takes impl and step
 # Returns the runtest command prefix (with runtest options) for testing the given step
 get_runtest_cmd = $(call get_run_prefix,$(1),$(2),$(if $(filter cs fsharp mal tcl vb,$(1)),RAW=1,)) \
-		    ../runtest.py $(opt_HARD) $(opt_DEFERRABLE) $(opt_OPTIONAL) $(call $(1)_TEST_OPTS) $(TEST_OPTS)
+		    ../runtest.py $(if $(filter dyalog, $(1)),--no-pty,) $(opt_HARD) $(opt_DEFERRABLE) $(opt_OPTIONAL) $(call $(-1)_TEST_OPTS) $(TEST_OPTS)
 
 # Takes impl and step
 # Returns the runtest command prefix (with runtest options) for testing the given step

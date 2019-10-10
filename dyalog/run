@@ -1,3 +1,7 @@
 #!/bin/bash
-
-rlwrap -a mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
+export WSPATH="$(dirname "${BASH_SOURCE[0]}")"
+if [ $TERM = "dumb" ]; then
+    mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
+else
+    rlwrap -a mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
+fi

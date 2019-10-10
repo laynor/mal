@@ -1,0 +1,15 @@
+* Dyalog APL mal
+** Intro
+  This code has been tested only on linux with Dyalog 17.1.
+  I'm still a beginner with APL so the code is not the best, but it's fun so why not.
+** Requirements
+  Dyalog APL. I'm using the last version (17.1), do not know if it works with any other version
+  rlwrap
+** Gotchas
+   - When I run mapl, I lose my keyboard configuration (xmodmap). Just be aware
+     of this possibility.
+   - Running it outside of a dyalog session causes backspace not to work. I do not know how to
+     solve this issue. The run script uses rlwrap to solve any editing issue.
+   - It looks like `⍞' writes on standard error, while `⎕' writes on standard output.
+     For this reason, the run script redirects stderr to stdout.
+     It might be better to switch the two and always use `⍞' for output purposes.

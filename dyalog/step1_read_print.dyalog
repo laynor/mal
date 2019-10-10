@@ -14,21 +14,12 @@
    ⍝     of tokens and returns the triple (s r R)
 
    Ok←1
-   Fail←0
-
-   ⍝ true if ⍵ is an empty array
-   empty←0≡≢
-
-   ⍝ parse eof
-   ⍝ eof←{(empty ⍵) ⍬ ⍵}
-   eof←empty,⍬∘,
-
-
-   ⍝ pred terminal : scans and returns one token T if (pred T), fails otherwise
-   terminal←{                   ⍝ ⍵ is an array of tokens, ⍺⍺ a predicate
-     empty ⍵: Fail (0⍴⍵) ⍵
-     ⍺⍺ ⊃1↑⍵: Ok (⊃1↑⍵) (1↓⍵)    ⍝ if (⍺⍺ ⍵[1]) [Ok w[1] ⍵[1..]]
-              Fail (0⍴⍵) ⍵          ⍝ else fail empty ⍵
+   fail←{0 (0⍴⍵) ⍵}
+   eof←(0=≢),⍬∘,
+   terminal←{
+     0=≢⍵: fail ⍵
+     ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
+              fail ⍵
    }
 
    ⍝ implemented as operator so that it is correct to write
@@ -72,9 +63,9 @@
        s2 r2 R2←p2 R1
 
        s2: Ok (r1 r2) R2
-           Fail (0⍴inp) inp
+           fail inp
      }⍬
-     Fail (0⍴inp) inp
+     fail inp
    }
 
    ⍝ This expects its left argument to be a parser returning an array.
@@ -94,9 +85,9 @@
        s2 r2 R2←p2 R1
 
        s2: Ok (r1,⊂r2) R2
-       Fail (0⍴inp) inp
+       fail inp
      }⍬
-     Fail (0⍴inp) inp
+     fail inp
    }
 
    ⍝ parse one of more occurrences of ⍺⍺
@@ -170,10 +161,10 @@
        c←1↑⍵
        y←1↑1↓⍵
 
-       empty ⍵: Fail ⍬ ⍵
-       c='"':   Ok '' (1↓⍵)
-       c='\':   {(escape y),⍵} map ∇ 2↓⍵
-                {c,⍵} map ∇ 1↓⍵
+       0=≢⍵:  fail inp
+       c='"': Ok '' (1↓⍵)
+       c='\': {(escape y),⍵} map ∇ 2↓⍵
+              {c,⍵} map ∇ 1↓⍵
      }
 
      {⊃1↓⍵} map (dquote seq stringRest) ⍵
@@ -196,7 +187,7 @@
        c←1↑⍵
        cc←2↑⍵
 
-       empty ⍵: Fail ⍬ ⍵
+       0=≢⍵: fail inp
        c='\':   {cc,⍵} map ∇ 2↓⍵
        c='"':   Ok '"' (1↓⍵)
                 {c,⍵} map ∇ 1↓⍵
@@ -257,20 +248,20 @@
    ⍝ (spec applyToForm 'quote')
    applyToForm←{
      s←⍺
-     ({List (Symbol s) (⊃1↑1↓⍵)} map ((⍵⍵ tSpec) seq ⍺⍺)) ⍵
+     ({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ tSpec) seq ⍺⍺)) ⍵
    }
    ⍝ all those disclose/take/drop ops are not very readable - that's because of
    ⍝ how the seq operator is implemented.
    ⍝ the seq operator returns an array of 2 boxes, containing the result of the
    ⍝ two sequenced parsers.
-   mDelim←{{(⊃1↑1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) seq2 (⍵⍵ many) seq2 (⍺⍺[2] tSpec)) ⍵}
+   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) seq2 (⍵⍵ many) seq2 (⍺⍺[2] tSpec)) ⍵}
    mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
    mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
    mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}
    specialHelper←{
-     s r R←(((⊃1↑⍵⍵) tSpec) seq ⍺⍺) ⍵
-     s : Ok (List ((Symbol (1↓⍵⍵)) (⊃1↑1↓r))) R
-     Fail ⍬ ⍵
+     s r R←(((⊃⍵⍵) tSpec) seq ⍺⍺) ⍵
+     s : Ok (List ((Symbol (1↓⍵⍵)) (⊃1↓r))) R
+     fail ⍵
    }
    mQuote←{(⍺⍺ specialHelper '''quote') ⍵}
    ⍝ mUnquote←{(⍺⍺ specialHelper '~unquote')⍵}
@@ -287,7 +278,7 @@
        ({List ((Symbol 'unquote') ⍵)} map form) R1
      }⍬
 
-     Fail ⍬ ⍵
+     fail ⍵
    }
 
    mForm←{mNum or mSym or mString or (∇ mList) or (∇ mVec) or (∇ mMap) or (∇ mUnquoteOrSpliceUnquote) or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mDeref) ⍵}

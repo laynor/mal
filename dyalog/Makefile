@@ -1,10 +1,11 @@
-SRCS = step0_repl.dyalogbuild
-BINS = $(SRCS:%.dyalogbuild=%.dws)
+MAPL ?= mapl
+SRCS = step0_repl.dyalogbuild mal.dyalogbuild
+BINS = $(SRCS:%.dyalogbuild=%)
 
 all : $(BINS)
 
 $(BINS):  %: %.dyalogbuild $(OTHER_SRCS)
-	bulid $@.dyalogbuild
+	MAL_STEP="$@" ${MAPL} build
 
 clean:
 	rm -f $(BINS)

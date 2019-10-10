@@ -305,10 +305,6 @@
      'error'                    ⍝ do something better than just returning a string 'error'
    }
 
-   ⍝ untyped lambda calculus tokenizer
-   var←(alpha seq (alphaNum many))  flat
-   special←{⍵∊'.()λ'}terminal
-   ulcTokens←(~isWhitespace) flt map ((var or special or whitespace)many)
    read←{
      s r R←tokens ⍵
      s: {

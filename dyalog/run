@@ -1,5 +1,5 @@
 #!/bin/bash
-export WSPATH="$(dirname "${BASH_SOURCE[0]}")"
+export WSPATH=$PWD
 if [ $TERM = "dumb" ]; then
     mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
 else

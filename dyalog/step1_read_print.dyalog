@@ -16,26 +16,20 @@
    Ok←1
    fail←{0 (0⍴⍵) ⍵}
    eof←(0=≢),⍬∘,
-   terminal←{
+   ∆t←{
      0=≢⍵: fail ⍵
      ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
               fail ⍵
    }
 
    ⍝ implemented as operator so that it is correct to write
-   ⍝ parser ← 'X' tok
-   tok←{(=∘⍺⍺) terminal ⍵}
+   ⍝ parser ← 'X' ∆k
+   ∆k←{(=∘⍺⍺) ∆t ⍵}
 
    ⍝ f map p : maps f on the result of p
-   map←{                        ⍝ ⍵⍵ is a parser function
-     s r R←⍵⍵ ⍵                 ⍝ ⍵ the usual array of tokens
-     s (⍺⍺ r) R                 ⍝ ⍺⍺ is a function that maps tokens to something else
-   }
-
-   ⍝ x cmap parser : shorthand for {x} map parser
-   cmap←{
-     x←⍺⍺
-     {x} map ⍵⍵ ⍵
+   map←{                   ⍝ ⍵⍵ is a parser function
+     s r R←⍵⍵ ⍵            ⍝ ⍵ the usual array of tokens
+     s (⍺⍺ r) R            ⍝ ⍺⍺ is a function that maps tokens to something else
    }
 
    ⍝ parser many : builds a new parser that parses 0 or many occurrences of parser
@@ -130,16 +124,16 @@
    isAlphaNum←isAlpha∨isDigit
 
    ⍝ Lexing - basic chars
-   digit←isDigit terminal
-   alpha←isAlpha terminal
-   alphaNum←isAlphaNum terminal
-   newline←NL tok
+   digit←isDigit ∆t
+   alpha←isAlpha ∆t
+   alphaNum←isAlphaNum ∆t
+   newline←NL ∆k
    isWhitespace1←∊∘WSNL
    isWhitespace←∧/∘isWhitespace1
-   whitespace1←isWhitespace1 terminal
+   whitespace1←isWhitespace1 ∆t
    whitespace←whitespace1 some flat
 
-   ⍝ terminals
+   ⍝ ∆ts
    ⍝ ---------
 
    ⍝ Strings
@@ -147,7 +141,7 @@
    ⍝ string : parse a string literal, escaped with the usual C rules.
    ⍝          returns the escaped string
    string←{
-     dquote←'"' tok
+     dquote←'"' ∆k
 
      stringRest←{
        escape←{
@@ -181,7 +175,7 @@
 
    ⍝ stringNE : parse a string literal, return the string literal itself
    stringNE←{
-     dquote←'"' tok
+     dquote←'"' ∆k
 
      stringRest←{
        c←1↑⍵
@@ -196,25 +190,25 @@
      {∊⍵} map (dquote seq stringRest) ⍵
    }
 
-   ⍝ quote      ← '''' tok
-   ⍝ unquote    ← '~'  tok
-   ⍝ deref      ← '@'  tok
-   ⍝ quasiquote ← '`'  tok
-   ⍝ openParen  ← '('  tok
-   semicolon  ← ';'  tok
+   ⍝ quote      ← '''' ∆k
+   ⍝ unquote    ← '~'  ∆k
+   ⍝ deref      ← '@'  ∆k
+   ⍝ quasiquote ← '`'  ∆k
+   ⍝ openParen  ← '('  ∆k
+   semicolon  ← ';'  ∆k
    specialChars←'''~@`()[]{}'
    specialCharsDqSemi←specialChars,'";,',WSNL
-   symbolCharNotDigit←{~⍵∊specialCharsDqSemi,'0123456789.'}terminal
-   symbolChar←{~⍵∊specialCharsDqSemi}terminal
-   comma←(=∘',')terminal
+   symbolCharNotDigit←{~⍵∊specialCharsDqSemi,'0123456789.'}∆t
+   symbolChar←{~⍵∊specialCharsDqSemi}∆t
+   comma←(=∘',')∆t
 
-   notNewLine←{~⍵∊NL}terminal
+   notNewLine←{~⍵∊NL}∆t
    comment←(semicolon seq (notNewLine many) seq newline) flat
 
    integer←digit some flat
    symbol←∊ map ((digit many) seq symbolCharNotDigit seq (symbolChar many))
 
-   special←{⍵∊specialChars} terminal
+   special←{⍵∊specialChars} ∆t
 
    flt←{(⍺⍺¨⍵)/⍵}
 
@@ -235,15 +229,15 @@
    tokType←1∘↑
    tokVal←{1↑1↓⍵}
 
-   mString←{String=tokType⍵} terminal
-   mNum←{Number=tokType⍵} terminal
-   mSym←{Symbol=tokType⍵} terminal
-   mSpec←{Special=tokType⍵} terminal
+   mString←{String=tokType⍵} ∆t
+   mNum←{Number=tokType⍵} ∆t
+   mSym←{Symbol=tokType⍵} ∆t
+   mSpec←{Special=tokType⍵} ∆t
    isSpecial←{
      ty val←⍺
      (ty=Special)∧(val≡⍵)
    }
-   tSpec←{(isSpecial∘⍺⍺)terminal ⍵}
+   tSpec←{(isSpecial∘⍺⍺)∆t ⍵}
 
    ⍝ (spec applyToForm 'quote')
    applyToForm←{

@@ -1,18 +1,4 @@
  :Namespace m
-   ⍝ Parsers take a stream of token and return three values:
-   ⍝ success word rest ← parser 'my sentence'
-   ⍝ success: 1 (success) or 0 (failure)
-
-   ⍝ Coding convention: parsing result
-   ⍝ s r R ← parser input
-   ⍝ s: status, can be either Ok (1) or Fail (0)
-   ⍝ r: result, any value in case of success, ⍬ in case of failure
-   ⍝ R: rest, the remaining input to be parsed.
-
-   ⍝ Documentation conventions:
-   ⍝ P : a parser, that is, a function that takes a vector
-   ⍝     of tokens and returns the triple (s r R)
-
    Ok←1
    fail←{0 (0⍴⍵) ⍵}
    eof←(0=≢),(⊂0∘⍴),⊂
@@ -59,10 +45,10 @@
    ⍝ the results of the right parser are then added at the end of
    ⍝ the first parser results.
    ⍝ Example:
-   ⍝ (⊂map symbol) ∆s number ∆s symbol
+   ⍝ (⊂map symbol) sq number sq symbol
    ⍝ ^^^^^^^^^^^^^
    ⍝ Enclose the first of the sequence
-   ∆s←{
+   sq←{
      s r R←⍺⍺ ⍵
 
      s: (r,⊂) map ⍵⍵ R
@@ -179,7 +165,7 @@
    comma←(=∘',')∆t
 
    notNewLine←{~⍵∊NL}∆t
-   comment←(semicolon seq (notNewLine many) ∆s newline) flat
+   comment←(semicolon seq (notNewLine many) sq newline) flat
 
    integer←digit some
    symbol←∊ map ((digit many) seq symbolCharNotDigit seq (symbolChar many))
@@ -218,7 +204,7 @@
    ⍝ (spec applyToForm 'quote')
    applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ tSpec) seq ⍺⍺)) ⍵}
 
-   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) ∆s (⍵⍵ many) ∆s (⍺⍺[2] tSpec)) ⍵}
+   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) sq (⍵⍵ many) sq (⍺⍺[2] tSpec)) ⍵}
    mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
    mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
    mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}

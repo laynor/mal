@@ -2,6 +2,43 @@
 ** Intro
   This code has been tested only on linux with Dyalog 17.1.
   I'm still a beginner with APL so the code is not the best, but it's fun so why not.
+** Reader
+   I'm sure there's a more idiomatic way to parse text in apl, but implementing
+   parser combinators is kinda fun and I'm a beginner so...
+*** Parser combinators
+    Parsers are functions that take a stream of tokens and return three values:
+    success output rest ← parser 'my sentence'
+    success: 1 (success) or 0 (failure)
+
+    Coding convention: parsing result
+    s r R ← parser input
+    s: status, can be either Ok (1) or Fail (0)
+    r: result, any value in case of success, ⍬ in case of failure
+    R: rest, the remaining input to be parsed.
+**** Provided parsers
+     - fail :: returns a failure result. takes a token array
+     - eof :: returns success if the token array is empty
+**** Provided parsing operators
+     - pred ∆t :: parses and return the first token if it matches the given predicate.
+                  ex. {1} ∆t  parses any token
+                      {2|⍵} ∆t parses only odd numbers
+     - val only :: parses and return the first token if it matches the given value
+     - f map P1 :: maps f onto the result of the parser P1
+                   es. +∘1 map parseInt
+     - P1 seq P2 sq P3 sq .. sq PN :: applies P1, P2, P3, .. PN in sequence. The
+          results are collected in an array NB. sequences must start with /seq/
+          and continue with /sq/. Not a typo.
+     - P many :: apply P 0 or more times. collect the results in an array
+     - P some :: apply P 1 or more times. collect the results in an array
+     - P1 or P2 :: return the result of the parser that consumes most tokens
+                   between P1 and P2
+     - P1 alt P2 :: try to apply P1 and P2, return the result of the first that
+                    succeeds.
+     - P skip :: apply P but return an empty array. Yet unwieldy.
+     - flat :: Yet unwieldy. should be the tool of choice to flatten out
+               sequences or many/some
+
+
 ** Requirements
   Dyalog APL. I'm using the last version (17.1), do not know if it works with any other version
   rlwrap

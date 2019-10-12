@@ -1,85 +1,73 @@
  :Namespace m
-   Ok←1
-   fail←{0 (0⍴⍵) ⍵}
-   eof←(0=≢),(⊂0∘⍴),⊂
-   ∆t←{
+   ⍝ Debug
+   ∇R←prn Y
+    ⎕se.Dyalog.Utils.display Y
+    R←Y
+   ∇
+
+   ⍝ Parser combinators
+   ⍝ ==================
+   ⍝ Parsers are functions that take an ⍝ array of tokens and return an array of
+   ⍝ 3 values:
+   ⍝
+   ⍝ s(tatus) |r(esult)| R(est)     ←  parser input
+   ⍝----------|--------|-----------|
+   ⍝    1     | result | (k↓input) | -→ SUCCESS
+   ⍝    0     | empty  | input     | -→ FAILURE
+
+   Ok←1                          ⍝ Results are array of 3 values:
+   fail←{0 (0⍴⍵) ⍵}              ⍝ (0 or 1: failure or success)
+
+   eof←(0=≢),(⊂0∘⍴),⊂            ⍝ parses the end of file
+
+   ∆t←{                          ⍝ {⍵∊⎕D} ∆t <--> parses a character if it is a digit
      0=≢⍵: fail ⍵
      ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
-              fail ⍵
+     fail ⍵
    }
+   only←{(=∘⍺⍺) ∆t ⍵}            ⍝ 'W' only <--> parses only the character 'W'
+   map←{s r R←⍵⍵ ⍵ ⋄ s (⍺⍺ r) R}
+   pipe←{⍵⍵ map ⍺⍺ ⍵}
 
-   ⍝ implemented as operator so that it is correct to write
-   ⍝ parser ← 'X' only
-   only←{(=∘⍺⍺) ∆t ⍵}
-
-   ⍝ f map p : maps f on the result of p
-   map←{                   ⍝ ⍵⍵ is a parser function
-     s r R←⍵⍵ ⍵            ⍝ ⍵ the usual array of tokens
-     s (⍺⍺ r) R            ⍝ ⍺⍺ is a function that maps tokens to something else
-   }
-
-   ∆←{⍵⍵ map ⍺⍺ ⍵}
-
-   ⍝ parser many : builds a new parser that parses 0 or many occurrences of parser
-   many←{
-     P←⍺⍺ ⋄ s r R1←⍺⍺ ⍵
-
-     s: {                       ⍝ P success! parse many more of them
-       s rs R2←P many R1
-       Ok  ((⊂r),rs) R2         ⍝ concat the result
-     }⍬
-     Ok r R1                    ⍝ P failed - return parsing results
-   }
-
-   ⍝ p1 seq p2 'my input' : applies p1 and p2 in sequence.
-   ⍝                        returns an array of two elements
-   ⍝                        containing the results of the two parsers
-   seq←{
+   ⍝ sequences
+   seq←{                         ⍝ sequence opening
      s1 r1 R1←⍺⍺ ⍵
 
      s1: r1 map ⍵⍵ R1
      fail ⍵
    }
 
-   ⍝ This expects its left argument to be a parser returning an array.
-   ⍝ the results of the right parser are then added at the end of
-   ⍝ the first parser results.
-   ⍝ Example:
-   ⍝ (⊂map symbol) sq number sq symbol
-   ⍝ ^^^^^^^^^^^^^
-   ⍝ Enclose the first of the sequence
-   sq←{
+   sq←{                          ⍝ other elements in the sequence
      s r R←⍺⍺ ⍵
 
      s: (r,⊂) map ⍵⍵ R
      fail ⍵
    }
 
-   ⍝ parse one of more occurrences of ⍺⍺
-   some←{((⊃,/) map ((⊂ map ⍺⍺) seq (⍺⍺ many))) ⍵}
+   many←{                        ⍝ parse 0 or more occurrences of ⍺⍺
+     P←⍺⍺ ⋄ s r R1←⍺⍺ ⍵
 
-   ⍝ parse either ⍺⍺ or ⍵⍵ - return the result of the first that matches
-   alt←{
-     s r R←⍺⍺ ⍵
-
-     s: s r R
-        ⍵⍵ ⍵
+     s: {
+       s rs R2←P many R1
+       Ok  ((⊂r),rs) R2
+     }⍬
+     Ok r R1
    }
 
-   ∇R←prn Y
-    ⎕se.Dyalog.Utils.display Y
-    R←Y
-   ∇
+   some←{((⊃,/) map ((⊂ map ⍺⍺) seq (⍺⍺ many))) ⍵} ⍝ 1 or more ⍺⍺
+   ⍝ returns the first parser that succeeds
+   alt←{s r R←⍺⍺ ⍵ ⋄ s: s r R ⋄ ⍵⍵ ⍵}
 
-   ⍝ same as alt, returns result of the parser that consumed more tokens (greedy)
-   or←{(1+>/(≢3∘⊃)¨R)⊃R←(⍺⍺ ⍵) (⍵⍵ ⍵)}
+   or←{(1+>/(≢3∘⊃)¨R)⊃R←(⍺⍺ ⍵) (⍵⍵ ⍵)} ⍝ returns result of the parser that
+                                       ⍝ consumed more tokens (greedy)
+   skip←{(⊢∘(0⍴⍵)) map ⍺⍺ ⍵} ⍝ can't use yet, as sequencing operations die as ⍝ a
+                             ⍝ result of using this one.
 
-   ⍝ skip ⍺⍺
-   skip←{(⊢∘(0⍴⍵)) map ⍺⍺ ⍵}    ⍝ can't use yet, as sequencing operations die as
-                                ⍝ a result of using this one.
+   flat←{∊map ⍺⍺ ⍵} ⍝ Not always the right way to do it - gotta find the right
+                    ⍝ definition
 
-   ⍝ Not always the right way to do it - gotta find the right definition
-   flat←{∊map ⍺⍺ ⍵}
+   ⍝ READER
+   ⍝ ======
 
    ⍝ Special chars
    NL←⎕ucs 13
@@ -125,7 +113,7 @@
        0=≢⍵:  fail inp
        c='"': Ok '' (1↓⍵)
        c='\': (escape y)∘, map ∇ 2↓⍵
-              {c,⍵} map ∇ 1↓⍵
+       {c,⍵} map ∇ 1↓⍵
      }
 
      {⊃1↓⍵} map (dquote seq stringRest) ⍵
@@ -151,7 +139,7 @@
        0=≢⍵: fail inp
        c='\': ,⍨∘2↑⍵ map ∇ 2↓⍵
        c='"': Ok '"' (1↓⍵)
-              {c,⍵} map ∇ 1↓⍵
+       {c,⍵} map ∇ 1↓⍵
      }
 
      {∊⍵} map (dquote seq stringRest) ⍵

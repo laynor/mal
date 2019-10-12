@@ -48,18 +48,10 @@
    ⍝                        returns an array of two elements
    ⍝                        containing the results of the two parsers
    seq←{
-     p1←⍺⍺
-     p2←⍵⍵
-     inp←⍵
-     s1 r1 R1←p1 inp
+     s1 r1 R1←⍺⍺ ⍵
 
-     s1:{
-       s2 r2 R2←p2 R1
-
-       s2: Ok (r1 r2) R2
-           fail inp
-     }⍬
-     fail inp
+     s1: r1 map ⍵⍵ R1
+     fail ⍵
    }
 
    ⍝ This expects its left argument to be a parser returning an array.
@@ -70,18 +62,10 @@
    ⍝ ^^^^^^^^^^^^^
    ⍝ Enclose the first of the sequence
    seq2←{
-     p1←⍺⍺
-     p2←⍵⍵
-     inp←⍵
-     s1 r1 R1←p1 inp
+     s r R←⍺⍺ ⍵
 
-     s1:{
-       s2 r2 R2←p2 R1
-
-       s2: Ok (r1,⊂r2) R2
-       fail inp
-     }⍬
-     fail inp
+     s: (r,⊂) map ⍵⍵ R
+     fail ⍵
    }
 
    ⍝ parse one of more occurrences of ⍺⍺

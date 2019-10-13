@@ -1,10 +1,6 @@
+ :Require file://debug.dyalog
  :Namespace m
    ⍝ Debug
-   ∇R←prn Y
-    ⎕se.Dyalog.Utils.display Y
-    R←Y
-   ∇
-
    ⍝ Parser combinators
    ⍝ ==================
    ⍝ Parsers are functions that take an ⍝ array of tokens and return an array of
@@ -19,7 +15,7 @@
    fail←{0 (0⍴⍵) ⍵}              ⍝ (0 or 1: failure or success)
 
    eof←(0=≢),(⊂0∘⍴),⊂            ⍝ parses the end of file
-
+   foo←##.dbg.prn
    ∆t←{                          ⍝ {⍵∊⎕D} ∆t <--> parses a character if it is a digit
      0=≢⍵: fail ⍵
      ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
@@ -146,7 +142,7 @@
    }
 
    semicolon←';'only
-   specialChars←'''~@`()[]{}'
+   specialChars←'''~@`()[]{}^'
    specialCharsDqSemi←specialChars,'";,',WSNL
    symbolCharNotDigit←{~⍵∊specialCharsDqSemi,'0123456789.'}∆t
    symbolChar←{~⍵∊specialCharsDqSemi}∆t
@@ -205,7 +201,6 @@
    ⍝ mUnquote←{(⍺⍺ specialHelper '~unquote')⍵}
    mQuasiquote←{(⍺⍺ specialHelper '`quasiquote')⍵}
    mDeref←{(⍺⍺ specialHelper '@deref')⍵}
-
    mUnquoteOrSpliceUnquote←{
      form←⍺⍺
      s1 r1 R1←('~' tSpec)⍵
@@ -215,11 +210,13 @@
        s2: ({List ((Symbol 'splice-unquote') ⍵)} map form) R2
        ({List ((Symbol 'unquote') ⍵)} map form) R1
      }⍬
-
      fail ⍵
    }
 
-   mForm←{mNum or mSym or mString or (∇ mList) or (∇ mVec) or (∇ mMap) or (∇ mUnquoteOrSpliceUnquote) or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mDeref) ⍵}
+   mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' tSpec seq ⍺⍺ sq ⍺⍺) ⍵}
+
+
+   mForm←{mNum or mSym or mString or (∇mWithMeta) or(∇ mList) or (∇ mVec) or (∇ mMap) or (∇ mUnquoteOrSpliceUnquote) or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mDeref) ⍵}
    trim←{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}
 
    pprint←{
@@ -243,6 +240,7 @@
      }r
      Error 'Lexer error'
    }
+
    eval←{⍵}
    print←pprint
    rep←print∘eval∘read

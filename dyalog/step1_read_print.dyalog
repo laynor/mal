@@ -193,31 +193,28 @@
    ⍝ do mutual recursion
 
    ⍝ (spec applyToForm 'quote')
-   applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ mSpec) seq ⍺⍺)) ⍵}
+   ⍝ applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ mSpec) seq ⍺⍺)) ⍵}
 
    mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] mSpec)) sq (⍵⍵ many) sq (⍺⍺[2] mSpec)) ⍵}
 
    mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
    mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
    mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}
+   mkFnAppl←{List ((⊂Symbol ⍺),⍵)}
    specialHelper←{
      s r R←(((⊃⍵⍵) mSpec) seq ⍺⍺) ⍵
-     s : Ok (List ((Symbol (1↓⍵⍵))(⊃1↓r))) R
+     s : Ok ((1↓⍵⍵) mkFnAppl 1↓r) R
      fail ⍵
    }
+
+
    mQuote←{(⍺⍺ specialHelper '''quote') ⍵}
    mQuasiquote←{(⍺⍺ specialHelper '`quasiquote')⍵}
    mDeref←{(⍺⍺ specialHelper '@deref')⍵}
    mUnquoteOrSpliceUnquote←{
-     form←⍺⍺
-     s1 r1 R1←('~' mSpec)⍵
-
-     s1:{
-       s2 r2 R2←('@' mSpec)R1
-       s2: ({List ((Symbol 'splice-unquote') ⍵)} map form) R2
-       ({List ((Symbol 'unquote') ⍵)} map form) R1
-     }⍬
-     fail ⍵
+     spu←{'splice-unquote' mkFnAppl 2↓⍵} map (('~' mSpec) seq ('@' mSpec) sq ⍺⍺)
+     unq←{'unquote' mkFnAppl 1↓⍵} map(('~' mSpec) seq ⍺⍺)
+     spu or unq ⍵
    }
 
    mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' mSpec seq ⍺⍺ sq ⍺⍺) ⍵}

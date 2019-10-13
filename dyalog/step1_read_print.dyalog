@@ -174,35 +174,34 @@
    tokType←⊃
    tokVal←{1↑1↓⍵}
 
-   tok←whitespace or comment or comma
+   tok←       whitespace or comment or comma
    tok←tok or ({Special ⍵} map special)
    tok←tok or ({Number,toInt ⍵} map integer)
    tok←tok or ({Symbol ⍵} map symbol)
    tok←tok or ({String ⍵} map string)
+
    tokens←(~isWhitespaceOrComment) flt map (tok many)
 
-
-   tt←{x←⍵ ⋄ {tt=tokType⍵}∆t}
-   mString←{String=tokType⍵} ∆t
-   mNum←{Number=tokType⍵} ∆t
-   mSym←{Symbol=tokType⍵} ∆t
-   mSpec←{Special=tokType⍵} ∆t
-   isSpecial←{ty val←⍺ ⋄ (ty=Special)∧(val≡⍵)}
-   tSpec←{(isSpecial∘⍺⍺)∆t ⍵}
+   tt←{x←⍺ ⋄ {x=tokType⍵}∆t ⍵}
+   mString←String∘tt
+   mNum←Number∘tt
+   mSym←Symbol∘tt
+   isSpecial←{ty val←⍺ ⋄ (ty=Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
+   mSpec←{(isSpecial∘⍺⍺)∆t ⍵}
 
    ⍝ In most of these parsers, ⍺⍺ is mForm. I don't know if there's a better way to
    ⍝ do mutual recursion
 
    ⍝ (spec applyToForm 'quote')
-   applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ tSpec) seq ⍺⍺)) ⍵}
+   applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ mSpec) seq ⍺⍺)) ⍵}
 
-   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) sq (⍵⍵ many) sq (⍺⍺[2] tSpec)) ⍵}
+   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] mSpec)) sq (⍵⍵ many) sq (⍺⍺[2] mSpec)) ⍵}
 
    mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
    mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
    mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}
    specialHelper←{
-     s r R←(((⊃⍵⍵) tSpec) seq ⍺⍺) ⍵
+     s r R←(((⊃⍵⍵) mSpec) seq ⍺⍺) ⍵
      s : Ok (List ((Symbol (1↓⍵⍵))(⊃1↓r))) R
      fail ⍵
    }
@@ -211,17 +210,17 @@
    mDeref←{(⍺⍺ specialHelper '@deref')⍵}
    mUnquoteOrSpliceUnquote←{
      form←⍺⍺
-     s1 r1 R1←('~' tSpec)⍵
+     s1 r1 R1←('~' mSpec)⍵
 
      s1:{
-       s2 r2 R2←('@' tSpec)R1
+       s2 r2 R2←('@' mSpec)R1
        s2: ({List ((Symbol 'splice-unquote') ⍵)} map form) R2
        ({List ((Symbol 'unquote') ⍵)} map form) R1
      }⍬
      fail ⍵
    }
 
-   mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' tSpec seq ⍺⍺ sq ⍺⍺) ⍵}
+   mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' mSpec seq ⍺⍺ sq ⍺⍺) ⍵}
 
    mForm←{
      p←mNum or mSym or mString

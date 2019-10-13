@@ -65,6 +65,17 @@
    ⍝ READER
    ⍝ ======
 
+   ⍝ Example lexers
+   isAlpha←{⍵∊'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'}
+   isDigit←{⍵∊'0123456789'}
+   isAlphaNum←isAlpha∨isDigit
+   digit←isDigit ∆t
+   alpha←isAlpha ∆t
+   alphaNum←isAlphaNum ∆t
+
+
+   ⍝ Lexing - basic chars
+
    ⍝ Special chars
    NL←⎕ucs 13
    TAB←⎕ucs 9
@@ -72,14 +83,6 @@
    WS←TAB,SPC
    WSNL←NL,WS
 
-   isAlpha←{⍵∊'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'}
-   isDigit←{⍵∊'0123456789'}
-   isAlphaNum←isAlpha∨isDigit
-
-   ⍝ Lexing - basic chars
-   digit←isDigit ∆t
-   alpha←isAlpha ∆t
-   alphaNum←isAlphaNum ∆t
    newline←NL only
    isWhitespace1←∊∘WSNL
    isWhitespace←∧/∘isWhitespace1
@@ -143,9 +146,9 @@
 
    semicolon←';'only
    specialChars←'''~@`()[]{}^'
-   specialCharsDqSemi←specialChars,'";,',WSNL
-   symbolCharNotDigit←{~⍵∊specialCharsDqSemi,'0123456789.'}∆t
-   symbolChar←{~⍵∊specialCharsDqSemi}∆t
+   nonSymbol←specialChars,'";,',WSNL
+   symbolCharNotDigit←{~⍵∊nonSymbol,'0123456789.'}∆t
+   symbolChar←{~⍵∊nonSymbol}∆t
    comma←(=∘',')∆t
 
    notNewLine←{~⍵∊NL}∆t
@@ -178,6 +181,8 @@
    tok←tok or ({String ⍵} map string)
    tokens←(~isWhitespaceOrComment) flt map (tok many)
 
+
+   tt←{x←⍵ ⋄ {tt=tokType⍵}∆t}
    mString←{String=tokType⍵} ∆t
    mNum←{Number=tokType⍵} ∆t
    mSym←{Symbol=tokType⍵} ∆t
@@ -185,20 +190,23 @@
    isSpecial←{ty val←⍺ ⋄ (ty=Special)∧(val≡⍵)}
    tSpec←{(isSpecial∘⍺⍺)∆t ⍵}
 
+   ⍝ In most of these parsers, ⍺⍺ is mForm. I don't know if there's a better way to
+   ⍝ do mutual recursion
+
    ⍝ (spec applyToForm 'quote')
    applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ tSpec) seq ⍺⍺)) ⍵}
 
    mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] tSpec)) sq (⍵⍵ many) sq (⍺⍺[2] tSpec)) ⍵}
+
    mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
    mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
    mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}
    specialHelper←{
      s r R←(((⊃⍵⍵) tSpec) seq ⍺⍺) ⍵
-     s : Ok (List ((Symbol (1↓⍵⍵)) (⊃1↓r))) R
+     s : Ok (List ((Symbol (1↓⍵⍵))(⊃1↓r))) R
      fail ⍵
    }
    mQuote←{(⍺⍺ specialHelper '''quote') ⍵}
-   ⍝ mUnquote←{(⍺⍺ specialHelper '~unquote')⍵}
    mQuasiquote←{(⍺⍺ specialHelper '`quasiquote')⍵}
    mDeref←{(⍺⍺ specialHelper '@deref')⍵}
    mUnquoteOrSpliceUnquote←{
@@ -215,8 +223,13 @@
 
    mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' tSpec seq ⍺⍺ sq ⍺⍺) ⍵}
 
-
-   mForm←{mNum or mSym or mString or (∇mWithMeta) or(∇ mList) or (∇ mVec) or (∇ mMap) or (∇ mUnquoteOrSpliceUnquote) or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mDeref) ⍵}
+   mForm←{
+     p←mNum or mSym or mString
+     p←p or (∇ mList) or (∇ mVec) or (∇ mMap)
+     p←p or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mUnquoteOrSpliceUnquote)
+     p←p or (∇ mDeref) or (∇mWithMeta)
+     p ⍵
+   }
    trim←{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}
 
    pprint←{

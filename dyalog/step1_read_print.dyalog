@@ -69,7 +69,7 @@
    isAlpha←{⍵∊'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'}
    isDigit←{⍵∊'0123456789'}
    isAlphaNum←isAlpha∨isDigit
-   digit←isDigit ∆t
+   DIGIT←isDigit ∆t
    alpha←isAlpha ∆t
    alphaNum←isAlphaNum ∆t
 
@@ -77,35 +77,46 @@
    ⍝ Lexing - basic chars
 
    ⍝ Special chars
-   NL←⎕ucs 13
-   TAB←⎕ucs 9
-   SPC←' '
-   WS←TAB,SPC
-   WSNL←NL,WS
+   :Namespace C
+     BS←⎕ucs 8
+     TAB←⎕ucs 9
+     LF←⎕ucs 10
+     CR←⎕ucs 13
+     NL←⎕ucs 10
+     SPC←' '
+     WS←TAB,SPC
+     WSNL←NL,WS
+   :EndNamespace
 
-   newline←NL only
-   isWhitespace1←∊∘WSNL
-   isWhitespace←∧/∘isWhitespace1
-   whitespace1←isWhitespace1 ∆t
-   whitespace←whitespace1 some flat
+   NL←∊∘C.NL ∆t
+   isWS1←∊∘C.WSNL
+   isWS←∧/∘isWS1
+   WS1←isWS1 ∆t
+   WS←WS1 some flat
 
    ⍝ MAL TOKENS
    ⍝ ----------
 
    ⍝ Strings
+   escape←{                   ⍝ we append ⍵ (the second char in the
+     escapes←'trbn',⍵         ⍝ escape sequence) so that it is
+     trans←C.(TAB CR BS LF),⍵ ⍝ translated to itself when it's not a
+     1↑(⍵=escapes)/trans          ⍝ known escape sequence
+   }
 
-   ⍝ string : parse a string literal, escaped with the usual C rules.
+   unescape←{
+     unescape1←{
+       escapes←(('\'∘,)¨'trbn\"'),⍵
+       trans←C.(TAB CR BS LF),'\"',⍵
+       1↑(⍵=trans)/escapes
+     }
+     ∊unescape1¨⍵
+   }
+
+   ⍝ STRING : parse a string literal, escaped with the usual C rules.
    ⍝          returns the escaped string
-   string←{
-     dquote←'"' only
-
-     stringRest←{
-       escape←{                   ⍝ we append ⍵ (the second char in the
-         escapes←'trbn',⍵         ⍝ escape sequence) so that it is
-         trans←(⎕ucs 9 10 8 13),⍵ ⍝ translated to itself when it's not a
-         1↑(⍵=escapes)/trans      ⍝ known escape sequence
-       }
-
+   STRING←{
+     REST←{
        c←1↑⍵
        y←1↑1↓⍵
 
@@ -115,23 +126,13 @@
        {c,⍵} map ∇ 1↓⍵
      }
 
-     {⊃1↓⍵} map (dquote seq stringRest) ⍵
+     {⊃1↓⍵} map ('"' only seq REST) ⍵
    }
 
-   unescape←{
-     unescape1←{
-       escapes←(('\'∘,)¨'trbn\"'),⍵
-       trans←(⎕ucs 9 10 8 13),'\"',⍵
-       1↑(⍵=trans)/escapes
-     }
-     ∊unescape1¨⍵
-   }
 
-   ⍝ stringNE : parse a string literal, return the string literal itself
-   stringNE←{
-     dquote←'"' only
-
-     stringRest←{
+   ⍝ QSTRING : parse a string literal, return the string literal itself
+   QSTRING←{
+     REST←{
        c←1↑⍵
        cc←2↑⍵
 
@@ -140,31 +141,29 @@
        c='"': Ok '"' (1↓⍵)
        {c,⍵} map ∇ 1↓⍵
      }
-
-     {∊⍵} map (dquote seq stringRest) ⍵
+     {∊⍵} map ('"' only seq REST) ⍵
    }
 
-   semicolon←';'only
+   SEMI←';'only
    specialChars←'''~@`()[]{}^'
-   nonSymbol←specialChars,'";,',WSNL
-   symbolCharNotDigit←{~⍵∊nonSymbol,'0123456789.'}∆t
-   symbolChar←{~⍵∊nonSymbol}∆t
-   comma←(=∘',')∆t
+   nonSymbol←specialChars,'";,',C.WSNL
+   SYMCHAR_NOT_DIGIT←{~⍵∊nonSymbol,⎕D,'.'}∆t
+   SYMCHAR←(~∊∘nonSymbol)∆t
+   COMMA←(=∘',')∆t
 
-   notNewLine←{~⍵∊NL}∆t
-   comment←(semicolon seq (notNewLine many) sq newline) flat
+   COMMENT←(SEMI seq ({~⍵∊C.NL}∆t many) sq NL) flat
 
-   integer←digit some
-   symbol←∊ map ((digit many) seq symbolCharNotDigit seq (symbolChar many))
+   INT←DIGIT some
+   SYM←∊map ((DIGIT many) seq SYMCHAR_NOT_DIGIT sq (SYMCHAR many))
 
-   special←{⍵∊specialChars} ∆t
+   SPECIAL←∊∘specialChars ∆t
 
    flt←{(⍺⍺¨⍵)/⍵}
 
 
    isComma←≡∘','
    isComment←';'≡⊃
-   isWhitespaceOrComment←isWhitespace∨isComment∨isComma
+   isWSOrComment←isWS∨isComment∨isComma
 
    toInt←{0<≢⍵: ⍎⍵ ⋄ ⍵}
 
@@ -174,13 +173,13 @@
    tokType←⊃
    tokVal←{1↑1↓⍵}
 
-   tok←       whitespace or comment or comma
-   tok←tok or ({Special ⍵} map special)
-   tok←tok or ({Number,toInt ⍵} map integer)
-   tok←tok or ({Symbol ⍵} map symbol)
-   tok←tok or ({String ⍵} map string)
+   tok←       WS or COMMENT or COMMA
+   tok←tok or ({Special ⍵} map SPECIAL)
+   tok←tok or ({Number,toInt ⍵} map INT)
+   tok←tok or ({Symbol ⍵} map SYM)
+   tok←tok or ({String ⍵} map STRING)
 
-   tokens←(~isWhitespaceOrComment) flt map (tok many)
+   tokens←(~isWSOrComment) flt map (tok many)
 
    tt←{x←⍺ ⋄ {x=tokType⍵}∆t ⍵}
    mString←String∘tt
@@ -221,9 +220,10 @@
 
    mForm←{
      p←mNum or mSym or mString
-     p←p or (∇ mList) or (∇ mVec) or (∇ mMap)
-     p←p or (∇ mQuote)  or (∇ mQuasiquote) or (∇ mUnquoteOrSpliceUnquote)
+     p←p or (∇ mList)  or (∇ mVec)        or (∇ mMap)
+     p←p or (∇ mQuote) or (∇ mQuasiquote) or (∇ mUnquoteOrSpliceUnquote)
      p←p or (∇ mDeref) or (∇mWithMeta)
+
      p ⍵
    }
    trim←{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}

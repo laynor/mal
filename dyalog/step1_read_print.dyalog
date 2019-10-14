@@ -168,61 +168,62 @@
    toInt←{0<≢⍵: ⍎⍵ ⋄ ⍵}
 
    ⍝ Tokens represented as a pair TokType value
-   Special Symbol Number String List Vec Map Error←⍳8
+
+   :Namespace T
+     Special Symbol Number String List Vec Map Error←⍳8
+   :EndNamespace
 
    tokType←⊃
    tokVal←{1↑1↓⍵}
 
    tok←       WS or COMMENT or COMMA
-   tok←tok or ({Special ⍵} map SPECIAL)
-   tok←tok or ({Number,toInt ⍵} map INT)
-   tok←tok or ({Symbol ⍵} map SYM)
-   tok←tok or ({String ⍵} map STRING)
+   tok←tok or (T.Special map SPECIAL)
+   tok←tok or ((T.Number,toInt) map INT)
+   tok←tok or (T.Symbol map SYM)
+   tok←tok or (T.String map STRING)
 
    tokens←(~isWSOrComment) flt map (tok many)
 
    tt←{x←⍺ ⋄ {x=tokType⍵}∆t ⍵}
-   mString←String∘tt
-   mNum←Number∘tt
-   mSym←Symbol∘tt
-   isSpecial←{ty val←⍺ ⋄ (ty=Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
-   mSpec←{(isSpecial∘⍺⍺)∆t ⍵}
+   String←T.String∘tt
+   Num←T.Number∘tt
+   Sym←T.Symbol∘tt
+   isSpecial←{ty val←⍺ ⋄ (ty=T.Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
+   Spec←{(isSpecial∘⍺⍺)∆t ⍵}
 
    ⍝ In most of these parsers, ⍺⍺ is mForm. I don't know if there's a better way to
    ⍝ do mutual recursion
 
-   ⍝ (spec applyToForm 'quote')
-   ⍝ applyToForm←{({List (Symbol s) (⊃1↓⍵)} map ((⍵⍵ mSpec) seq ⍺⍺)) ⍵}
+   hDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] Spec)) sq (⍵⍵ many) sq (⍺⍺[2] Spec)) ⍵}
 
-   mDelim←{{(⊃1↓⍵)} map ((⊂map(⍺⍺[1] mSpec)) sq (⍵⍵ many) sq (⍺⍺[2] mSpec)) ⍵}
+   List←{T.List map ('()' hDelim ⍺⍺) ⍵}
+   Vec←{T.Vec map ('[]' hDelim ⍺⍺) ⍵}
+   Map←{T.Map map ('{}' hDelim ⍺⍺) ⍵}
 
-   mList←{{List ⍵} map ('()' mDelim ⍺⍺) ⍵}
-   mVec←{{Vec ⍵} map ('[]' mDelim ⍺⍺) ⍵}
-   mMap←{{Map ⍵} map ('{}' mDelim ⍺⍺) ⍵}
-   mkFnAppl←{List ((⊂Symbol ⍺),⍵)}
+   mkFnAppl←{T.List ((⊂T.Symbol ⍺),⍵)}
+
    specialHelper←{
-     s r R←(((⊃⍵⍵) mSpec) seq ⍺⍺) ⍵
+     s r R←(((⊃⍵⍵) Spec) seq ⍺⍺) ⍵
      s : Ok ((1↓⍵⍵) mkFnAppl 1↓r) R
      fail ⍵
    }
 
-
-   mQuote←{(⍺⍺ specialHelper '''quote') ⍵}
-   mQuasiquote←{(⍺⍺ specialHelper '`quasiquote')⍵}
-   mDeref←{(⍺⍺ specialHelper '@deref')⍵}
-   mUnquoteOrSpliceUnquote←{
-     spu←{'splice-unquote' mkFnAppl 2↓⍵} map (('~' mSpec) seq ('@' mSpec) sq ⍺⍺)
-     unq←{'unquote' mkFnAppl 1↓⍵} map(('~' mSpec) seq ⍺⍺)
+   Quote←{(⍺⍺ specialHelper '''quote') ⍵}
+   Quasiquote←{(⍺⍺ specialHelper '`quasiquote')⍵}
+   Deref←{(⍺⍺ specialHelper '@deref')⍵}
+   UnquoteOrSpliceUnquote←{
+     spu←{'splice-unquote' mkFnAppl 2↓⍵} map (('~' Spec) seq ('@' Spec) sq ⍺⍺)
+     unq←{'unquote' mkFnAppl 1↓⍵} map(('~' Spec) seq ⍺⍺)
      spu or unq ⍵
    }
 
-   mWithMeta←{{List ((⊂Symbol 'with-meta'),⌽1↓⍵)} map ('^' mSpec seq ⍺⍺ sq ⍺⍺) ⍵}
+   WithMeta←{{T.List ((⊂T.Symbol 'with-meta'),⌽1↓⍵)} map ('^' Spec seq ⍺⍺ sq ⍺⍺) ⍵}
 
-   mForm←{
-     p←mNum or mSym or mString
-     p←p or (∇ mList)  or (∇ mVec)        or (∇ mMap)
-     p←p or (∇ mQuote) or (∇ mQuasiquote) or (∇ mUnquoteOrSpliceUnquote)
-     p←p or (∇ mDeref) or (∇mWithMeta)
+   Form←{
+     p←Num or Sym or String
+     p←p or (∇ List)  or (∇ Vec)        or (∇ Map)
+     p←p or (∇ Quote) or (∇ Quasiquote) or (∇ UnquoteOrSpliceUnquote)
+     p←p or (∇ Deref) or (∇WithMeta)
 
      p ⍵
    }
@@ -230,24 +231,24 @@
 
    pprint←{
      t v←⍵
-     t≡Number: trim⍕v
-     t≡Symbol: v
-     t≡String: '"',(unescape v),'"'
-     t≡List:   '(',(trim⍕pprint¨ v),')'
-     t≡Vec:    '[',(trim⍕pprint¨ v),']'
-     t≡Map:    '{',(trim⍕pprint¨ v),'}'
-     t≡Error:  'ERROR: ', v
+     t≡T.Number: trim⍕v
+     t≡T.Symbol: v
+     t≡T.String: '"',(unescape v),'"'
+     t≡T.List:   '(',(trim⍕pprint¨ v),')'
+     t≡T.Vec:    '[',(trim⍕pprint¨ v),']'
+     t≡T.Map:    '{',(trim⍕pprint¨ v),'}'
+     t≡T.Error:  'ERROR: ', v
      'error'                    ⍝ do something better than just returning a string 'error'
    }
 
    read←{
      s r R←tokens ⍵
      s: {
-       s r R←mForm ⍵
+       s r R←Form ⍵
        s: r
-       Error 'end of input'
+       T.Error 'end of input'
      }r
-     Error 'Lexer error'
+     T.Error 'Lexer error'
    }
 
    eval←{⍵}

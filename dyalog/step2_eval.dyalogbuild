@@ -1,0 +1,9 @@
+﻿DyalogBuild: 0.1
+ID         : Mal, Version=1.0
+Description: Built Mal workspace
+Defaults   : ⎕IO←⎕ML←1
+TARGET     : Distribution/Mal.dws
+
+NS    : *.dyalog, Target=#
+
+LX    : StartMAL

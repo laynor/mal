@@ -2,7 +2,7 @@
 ID         : Mal, Version=1.0
 Description: Built Mal workspace
 Defaults   : ⎕IO←⎕ML←1
-TARGET     : Distribution/Mal.dws
+TARGET     : Distribution/step1_read_print.dws
 
 NS    : *.dyalog, Target=#
 

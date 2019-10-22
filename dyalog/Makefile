@@ -1,12 +1,14 @@
+SH ?= bash
 MAPL ?= mapl
 SRCS = step0_repl.dyalogbuild step1_read_print.dyalogbuild step2_eval.dyalogbuild
-BINS = $(SRCS:%.dyalogbuild=%.dws)
+BINS = $(SRCS:%.dyalogbuild=Distribution/%.dws)
 SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 all : $(BINS)
 
-$(BINS):  %.dws: %.dyalogbuild %.dyalog $(OTHER_SRCS)
-	WSPATH=${SRCDIR} MAL_STEP="$@" ${MAPL} build
+$(BINS):  Distribution/%.dws: %.dyalogbuild %.dyalog $(OTHER_SRCS)
+	# WSPATH=${SRCDIR} MAL_STEP="$@" ${MAPL} build
+	$(SH) build.sh "$*"
 
 clean:
 	rm -f $(BINS)

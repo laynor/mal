@@ -252,35 +252,30 @@
    }
 
    mkPureFn←{
-     (⍺⍺ ⍵), ⍺
+     (⍺⍺ ⍵) ⍺
    }
 
-   D←{(⍺⍺ ##.Env.defn ⍵⍵) ⍵}
-   P←{(⍺⍺ D (⍵⍵ mkPureFn)) ⍵}
+   allNumbers←{∧/⊃¨T.Number=⍵}
+   mkNumFn←{
+     allNumbers ⍵: T.Number (⍺⍺ (⊃1∘↓)¨⍵)
+     Error ⊂'Type Error'
+   }
+
+   defn←{(⍺⍺ ##.Env.defn ⍵⍵) ⍵}
+   defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
+   defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
    mkBaseEnv←{
-     e←('+' P (+/)) ⍬
-     e←('-' P(1∘↑-(+/1∘↓))) e
-     e←('*' P (×/) ) e
-     e←('/' P (1∘↑÷(×/1∘↓))) e
+     e←('+' defOp (+/))          ⍬
+     e←('-' defOp (1∘↑-(+/1∘↓))) e
+     e←('*' defOp (×/))          e
+     e←('/' defOp (1∘↑÷(×/1∘↓))) e
      e
    }
 
 
 
    BaseEnv←mkBaseEnv⍬
-
-   ⍝ vEach←{
-   ⍝   f←⍺⍺
-   ⍝   env←⍺
-   ⍝   vec←⍵
-   ⍝   0=≢⍵: ⍬ env
-   ⍝   {
-   ⍝     v  env1←env f ⊃⍵
-   ⍝     vs env2←env1 (f ∇) 1↓⍵
-   ⍝     ((⊂v),vs) env2
-   ⍝   }⍵
-   ⍝ }
 
    vEach←{
      env←⍺
@@ -295,16 +290,16 @@
    }
 
    evFn←{
-     fsym←⊃⍵
-     args←1↓⍵
-     ev←⍺⍺
+     farg←⊃2⊃⍵
+     args←1↓2⊃⍵
+     eval←⍺⍺
      env←⍺
-     f env1←⍺ ⍺⍺ fsym
-     T.Function≠⊃f: T.Error 'Type error'
+     (ty val) env1←env eval farg
+     T.Function≠ty: (T.Error 'Type error') env1
      {
-       args env2←env1 (ev vEach) ⍵
-       env2 f args
-     }⍵
+       args env2←env1 (eval vEach) args
+       env2 val.call args
+     }⍬
    }
 
    eval←{

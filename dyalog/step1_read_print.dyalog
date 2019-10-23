@@ -15,7 +15,6 @@
    fail←{0 (0⍴⍵) ⍵}              ⍝ (0 or 1: failure or success)
 
    eof←(0=≢),(⊂0∘⍴),⊂            ⍝ parses the end of file
-   foo←##.dbg.prn
    ∆t←{                          ⍝ {⍵∊⎕D} ∆t <--> parses a character if it is a digit
      0=≢⍵: fail ⍵
      ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
@@ -270,5 +269,6 @@
       →0
     :EndTrap
    out:'Bye'
+    ⎕off
    ∇
  :EndNamespace

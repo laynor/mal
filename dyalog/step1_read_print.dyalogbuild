@@ -4,6 +4,6 @@ Description: Built Mal workspace
 Defaults   : ⎕IO←⎕ML←1
 TARGET     : Distribution/step1_read_print.dws
 
-NS    : *.dyalog, Target=#
+NS    : step1_read_print.dyalog, Target=#
 
-LX    : StartMAL
+LX    : m.StartMAL

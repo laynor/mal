@@ -2,8 +2,8 @@
 ID         : Mal, Version=1.0
 Description: Built Mal workspace
 Defaults   : ⎕IO←⎕ML←1
-TARGET     : Distribution/Mal.dws
+TARGET     : Distribution/step2_eval.dws
 
-NS    : *.dyalog, Target=#
+NS    : step2_eval.dyalog, Target=#
 
-LX    : StartMAL
+LX    : m.StartMAL ⍬

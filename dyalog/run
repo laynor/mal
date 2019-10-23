@@ -1,7 +1,7 @@
 #!/bin/bash
 export WSPATH=$PWD
 if [ $TERM = "dumb" ]; then
-    mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
+    mapl -b -s Distribution/${STEP:-stepA_mal} ${@} 2>&1
 else
-    rlwrap -a mapl -b -s ${STEP:-stepA_mal} ${@} 2>&1
+    rlwrap -a mapl -b -s Distribution/${STEP:-stepA_mal} ${@} 2>&1
 fi

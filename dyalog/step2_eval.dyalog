@@ -3,6 +3,7 @@
  :Require file://Types.dyalog
  :Namespace m
    T←##.T
+   Env←##.Env
    ⍝ Debug
    ⍝ Parser combinators
    ⍝ ==================
@@ -24,7 +25,7 @@
      fail ⍵
    }
    only←{(=∘⍺⍺) ∆t ⍵}            ⍝ 'W' only <--> parses only the character 'W'
-   map←{s r R←⍵⍵ ⍵ ⋄ s (⍺⍺ r) R}
+   map←{s r R←⍵⍵ ⍵ ⋄ s: s (⍺⍺ r) R ⋄ fail ⍵}
    pipe←{⍵⍵ map ⍺⍺ ⍵}
 
    ⍝ sequences
@@ -155,7 +156,8 @@
 
    COMMENT←(SEMI seq ({~⍵∊C.NL}∆t many) sq NL) flat
 
-   INT←DIGIT some
+   SIGN←∊∘'+-' ∆t
+   INT←(DIGIT some) or (('-'⎕r'¯')∘∊ map (SIGN sq (DIGIT some)))
    SYM←∊map ((DIGIT many) seq SYMCHAR_NOT_DIGIT sq (SYMCHAR many))
 
    SPECIAL←∊∘specialChars ∆t
@@ -230,7 +232,7 @@
 
    pprint←{
      t v←⍵
-     t≡T.Number: trim⍕v
+     t≡T.Number: ('¯'⎕r'-')trim⍕v
      t≡T.Symbol: v
      t≡T.String: '"',(unescape v),'"'
      t≡T.List:   '(',(trim⍕pprint¨ v),')'
@@ -261,18 +263,17 @@
      Error ⊂'Type Error'
    }
 
-   defn←{(⍺⍺ ##.Env.defn ⍵⍵) ⍵}
+   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
    defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
    defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
    mkBaseEnv←{
      e←('+' defOp (+/))          ⍬
-     e←('-' defOp (1∘↑-(+/1∘↓))) e
+     e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
      e←('*' defOp (×/))          e
-     e←('/' defOp (1∘↑÷(×/1∘↓))) e
+     e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
      e
    }
-
 
 
    BaseEnv←mkBaseEnv⍬
@@ -309,15 +310,20 @@
      ty≡T.Function: ⍵ ⍺
      ty≡T.Error: ⍵ ⍺
      ty≡T.Symbol: ⍺{
-       (2⊃⍵) ##.Env.in ⍺: ((2⊃⍵)##.Env.get⍺) ⍺
+       ':'=⊃2⊃⍵: ⍵ ⍺            ⍝ keywords
+       (2⊃⍵) Env.in ⍺: ((2⊃⍵)Env.get⍺) ⍺
        (T.Error ('Name `',(2⊃⍵),''' is unbound.')) ⍺
      }⍵
      ty≡T.Vec: ⍺{
        vs env←(⍺(eval vEach)2⊃⍵)
        (T.Vec vs) env
      }⍵
-     ty≡T.Map: T.Map (⍺(∇vEach)2⊃⍵)
-     ty≡T.List: ⍺(∇evFn)⍵
+     ty≡T.Map: ⍺{
+       vs env←(⍺(eval vEach)2⊃⍵)
+       (T.Map vs) env
+     }⍵
+     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evFn)⍵
+     (ty≡T.List): ⍵ ⍺
      T.Error (⍕'Unknown type' ty)
    }
    print←pprint
@@ -343,6 +349,6 @@
       →0
     :EndTrap
    out:'Bye'
-    ⍝ ⎕off
+    ⎕off
    ∇
  :EndNamespace

@@ -19,5 +19,6 @@
       →0
     :EndTrap
     out: 'Bye'
+    ⎕off
    ∇
  :EndNamespace

@@ -7,7 +7,6 @@ SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 all : $(BINS)
 
 $(BINS):  Distribution/%.dws: %.dyalogbuild %.dyalog $(OTHER_SRCS)
-	# WSPATH=${SRCDIR} MAL_STEP="$@" ${MAPL} build
 	$(SH) build.sh "$*"
 
 clean:

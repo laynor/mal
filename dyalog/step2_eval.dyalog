@@ -1,6 +1,8 @@
  :Require file://debug.dyalog
- :Require file://defineFn.dyalog
+ :Require file://env.dyalog
+ :Require file://Types.dyalog
  :Namespace m
+   T←##.T
    ⍝ Debug
    ⍝ Parser combinators
    ⍝ ==================
@@ -16,7 +18,6 @@
    fail←{0 (0⍴⍵) ⍵}              ⍝ (0 or 1: failure or success)
 
    eof←(0=≢),(⊂0∘⍴),⊂            ⍝ parses the end of file
-   foo←##.dbg.prn
    ∆t←{                          ⍝ {⍵∊⎕D} ∆t <--> parses a character if it is a digit
      0=≢⍵: fail ⍵
      ⍺⍺ ⊃⍵: Ok (⊃⍵) (1↓⍵)
@@ -170,9 +171,6 @@
 
    ⍝ Tokens represented as a pair TokType value
 
-   :Namespace T
-     Special Symbol Number String List Vec Map Function Error←⍳9
-   :EndNamespace
 
    tokType←⊃
    tokVal←{1↑1↓⍵}
@@ -238,7 +236,7 @@
      t≡T.List:   '(',(trim⍕pprint¨ v),')'
      t≡T.Vec:    '[',(trim⍕pprint¨ v),']'
      t≡T.Map:    '{',(trim⍕pprint¨ v),'}'
-     t≡T.Function:    '{',(trim⍕pprint¨ v),'}'
+     t≡T.Function: '#<Funciton>'
      t≡T.Error:  'ERROR: ', v
      'error'                    ⍝ do something better than just returning a string 'error'
    }
@@ -257,18 +255,43 @@
      (⍺⍺ ⍵), ⍺
    }
 
-   env← Env.((+/ mkPureFn) defineFn '+' ((1∘↑-(+/1∘↓)) mkPureFn) defineFn '-' ((×/) mkPureFn) defineFn '*' ((1∘↑÷(×/1∘↓)) mkPureFn) defineFn '/') ⍬
+   D←{(⍺⍺ ##.Env.defn ⍵⍵) ⍵}
+   P←{(⍺⍺ D (⍵⍵ mkPureFn)) ⍵}
+
+   mkBaseEnv←{
+     e←('+' P (+/)) ⍬
+     e←('-' P(1∘↑-(+/1∘↓))) e
+     e←('*' P (×/) ) e
+     e←('/' P (1∘↑÷(×/1∘↓))) e
+     e
+   }
+
+
+
+   BaseEnv←mkBaseEnv⍬
+
+   ⍝ vEach←{
+   ⍝   f←⍺⍺
+   ⍝   env←⍺
+   ⍝   vec←⍵
+   ⍝   0=≢⍵: ⍬ env
+   ⍝   {
+   ⍝     v  env1←env f ⊃⍵
+   ⍝     vs env2←env1 (f ∇) 1↓⍵
+   ⍝     ((⊂v),vs) env2
+   ⍝   }⍵
+   ⍝ }
 
    vEach←{
-     f←⍺⍺
      env←⍺
      vec←⍵
-     0=⍴⍵: ⍬
+     eval←⍺⍺
+     0=≢⍵:⍬ ⍺
      {
-       v  env1←f ⊃⍵
-       vs env2←env (f evEach) 1↓⍵
-       (⊂v),vs
-     }⍵
+       v e1←env eval ⊃vec
+       vs e2←env (eval vEach) (1↓vec)
+       ((⊂v),vs) e2
+     }⍬
    }
 
    evFn←{
@@ -290,34 +313,41 @@
      ty≡T.String: ⍵ ⍺
      ty≡T.Function: ⍵ ⍺
      ty≡T.Error: ⍵ ⍺
-     ty≡T.Symbol: ((2⊃⍵)Env.get⍺) ⍺
-     ty≡T.Vec: ⍺(∇vEach)⍵
-     ty≡T.Map: ⍺(∇vEach)⍵
+     ty≡T.Symbol: ⍺{
+       (2⊃⍵) ##.Env.in ⍺: ((2⊃⍵)##.Env.get⍺) ⍺
+       (T.Error ('Name `',(2⊃⍵),''' is unbound.')) ⍺
+     }⍵
+     ty≡T.Vec: ⍺{
+       vs env←(⍺(eval vEach)2⊃⍵)
+       (T.Vec vs) env
+     }⍵
+     ty≡T.Map: T.Map (⍺(∇vEach)2⊃⍵)
      ty≡T.List: ⍺(∇evFn)⍵
-     Error ⍕'Unknown type' ty
+     T.Error (⍕'Unknown type' ty)
    }
    print←pprint
-   rep←{
-     v env←eval read ⍵
-     print v
+   ∇R←env rep input
+    v newEnv←env eval read input
+    print v
+    R←v newEnv
+   ∇
 
-     print∘eval∘read
-   }
-
-   ∇R←StartMAL;inp;prompt;res;out;⎕TRAP
+   ∇R←StartMAL env;inp;prompt;res;out;⎕TRAP
+    env←(1+0=≢env)⊃env BaseEnv
     prompt←'user> '
     :Trap 1004
       ⍞←prompt
       inp←(≢prompt)↓⍞
       →(inp≡'')/out
       →(inp≡'(exit)')/out
-      res env←rep inp
-      ⍞←res
+      res newEnv←env rep inp
+      ⍝ ⍞←res
       ⍞←⎕ucs 10
 
-      StartMAL
+      StartMAL newEnv
       →0
     :EndTrap
    out:'Bye'
+    ⍝ ⎕off
    ∇
  :EndNamespace

@@ -1,7 +1,7 @@
 :Require file://Types.dyalog
 :Namespace Printer
   T←##.T
-  trim{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}
+  trim←{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}
 
   pprint←{
     t v←⍵

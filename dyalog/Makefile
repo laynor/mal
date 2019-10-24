@@ -1,6 +1,6 @@
 SH ?= bash
 MAPL ?= mapl
-SRCS = step0_repl.dyalogbuild step1_read_print.dyalogbuild step2_eval.dyalogbuild
+SRCS = step0_repl.dyalogbuild step1_read_print.dyalogbuild step2_eval.dyalogbuild step3_env.dyalogbuild
 BINS = $(SRCS:%.dyalogbuild=Distribution/%.dws)
 SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 

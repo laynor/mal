@@ -7,13 +7,9 @@
   T←##.T
   Env←##.Env
 
-  read←{
-    ##.Reader.read ⍵
-  }
+  read←##.Reader.read
 
-  mkPureFn←{
-    (⍺⍺ ⍵) ⍺
-  }
+  mkPureFn←{(⍺⍺ ⍵) ⍺}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
 
   allNumbers←{∧/⊃¨T.Number=⍵}
   mkNumFn←{

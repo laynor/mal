@@ -53,7 +53,7 @@
 
   evFn←{
     farg←lst.car ⍵
-    args←lst.cdr ⍵
+    args←2⊃lst.cdr ⍵
     eval←⍺⍺
     env←⍺
     (ty val) env1←env eval farg
@@ -64,8 +64,14 @@
     }⍬
   }
 
-  evDef←{Error ('def! unimplemented.')}
-  evLet←{Error ('let* unimplemented.')}
+  evDef←{
+    x←⍺⍺
+    (T.Error ('def! unimplemented.')) ⍺
+  }
+  evLet←{
+    x←⍺⍺
+    (T.Error ('let* unimplemented.')) ⍺
+  }
 
   evLst←{
     h←lst.car ⍵

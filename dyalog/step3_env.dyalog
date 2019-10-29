@@ -22,9 +22,9 @@
   defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
   mkBaseEnv←{
-    e←('+' defOp (+/))          ⍬
+    e←('+' defOp (+/))           ⍬
     e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
-    e←('*' defOp (×/))          e
+    e←('*' defOp (×/))           e
     e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
     e
   }

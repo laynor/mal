@@ -7,15 +7,26 @@
   T←#.T
   Env←#.Env
 
+  :Namespace E
+    nameError←{'Name error: ''',⍵,''' not found.'}
+
+    ty←{
+      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
+      #.T.Error msg
+    }
+  :EndNamespace
+
+
   read←##.Reader.read
 
   mkPureFn←{(⍺⍺ ⍵) ⍺}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
 
 
+  ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
     nonNumber←(#.T.Number=⊃¨⍵)⍳0
     nonNumber>⍴⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Error (⊂'Type Error: Number expected, found ', #.T.typeName ⊃nonNumber⊃⍵)
+                  #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
   }
 
   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
@@ -71,11 +82,17 @@
     (((2⊃name) Env.def val) env1)
   }
 
+  ∇throw error
+   error ⎕signal 100
+  ∇
+
   ⍝ TODO check name is actually a symbol
   evDef←{
-    env2←⍵(⍺⍺evBinding)⍺
+    name form←⍵
+    val env1←⍺ ⍺⍺ form
+    env2←(((2⊃name) Env.def val) env1)
     ⍝ ⎕←env2
-    (⊃⍵) env2
+    val env2
   }
 
 
@@ -108,7 +125,7 @@
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃⍵: ⍵ ⍺             ⍝ keywords
       (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵)) ⍺
-      (T.Error ('Name `',(2⊃⍵),''' is unbound.')) ⍺
+      throw E.nameError 2⊃⍵
     }⍵
     ty≡T.Vec: ⍺{
       vs env←(⍺(eval vEach)2⊃⍵)
@@ -120,15 +137,21 @@
     }⍵
     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evLst)⍵
     (ty≡T.List): ⍵ ⍺
-    T.Error (⍕'Unknown type' ty)
+    throw (⍕'Unknown type' ty)
   }
 
   print←##.Printer.pprint
 
+
   ∇R←env rep input
-   v newEnv←env eval read input
-   print v
-   R←v newEnv
+   :Trap 100
+     v newEnv←env eval read input
+     print v
+     R←v newEnv
+   :Case 100
+     ⎕←⎕dmx.EM
+     R←(T.Symbol ,⊂'nil') env
+   :EndTrap
   ∇
 
   ∇R←StartMAL env;inp;prompt;res;out;⎕TRAP

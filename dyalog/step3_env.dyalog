@@ -4,16 +4,16 @@
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
 :Namespace m
-  T←##.T
-  Env←##.Env
+  T←#.T
+  Env←#.Env
 
   read←##.Reader.read
 
   mkPureFn←{(⍺⍺ ⍵) ⍺}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
 
-  allNumbers←{∧/⊃¨T.Number=⍵}
   mkNumFn←{
-    allNumbers ⍵: T.Number (⍺⍺ (⊃1∘↓)¨⍵)
+    allNumbers←{∧/⊃¨#.T.Number=⍵}
+    allNumbers ⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
     Error ⊂'Type Error'
   }
 
@@ -22,13 +22,12 @@
   defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
   mkBaseEnv←{
-    e←('+' defOp (+/))           ⍬
+    e←('+' defOp (+/))   Env.empty
     e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
     e←('*' defOp (×/))           e
     e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
     e
   }
-
 
   BaseEnv←mkBaseEnv⍬
 
@@ -88,8 +87,8 @@
     ty≡T.Function: ⍵ ⍺
     ty≡T.Error: ⍵ ⍺
     ty≡T.Symbol: ⍺{
-      ':'=⊃2⊃⍵: ⍵ ⍺            ⍝ keywords
-      (2⊃⍵) Env.in ⍺: ((2⊃⍵)Env.get⍺) ⍺
+      ':'=⊃2⊃⍵: ⍵ ⍺             ⍝ keywords
+      (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵)) ⍺
       (T.Error ('Name `',(2⊃⍵),''' is unbound.')) ⍺
     }⍵
     ty≡T.Vec: ⍺{

@@ -11,10 +11,11 @@
 
   mkPureFn←{(⍺⍺ ⍵) ⍺}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
 
+
   mkNumFn←{
-    allNumbers←{∧/⊃¨#.T.Number=⍵}
-    allNumbers ⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
-    Error ⊂'Type Error'
+    nonNumber←(#.T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
+    #.T.Error (⊂'Type Error: Number expected, found ', #.T.typeName ⊃nonNumber⊃⍵)
   }
 
   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
@@ -63,20 +64,38 @@
     }⍬
   }
 
-  evDef←{
-    x←⍺⍺
-    (T.Error ('def! unimplemented.')) ⍺
+  ⍝ env (eval evBinding) (name form)
+  evBinding←{
+    name form←⍺
+    val env1←⍵ ⍺⍺ form
+    (((2⊃name) Env.def val) env1)
   }
+
+  ⍝ TODO check name is actually a symbol
+  evDef←{
+    env2←⍵(⍺⍺evBinding)⍺
+    ⍝ ⎕←env2
+    (⊃⍵) env2
+  }
+
+
+  ⍝ TODO type check names
   evLet←{
-    x←⍺⍺
-    (T.Error ('let* unimplemented.')) ⍺
+    eval←⍺⍺
+    (_ bs) exp←⍵                ⍝ TODO check type!
+    bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
+    env←Env.empty,⍺
+    ⍝ Evaluate bindings
+    env←⊃(eval evBinding)/(⌽bs),⊂env
+    res _←env ⍺⍺ exp
+    res ⍺
   }
 
   evLst←{
     h←lst.car ⍵
     _ t←lst.cdr ⍵
-    h≡T.Symbol ('def!'): ⍺(⍺⍺evDef)⍵
-    h≡T.Symbol ('let*'): ⍺(⍺⍺evLet)⍵
+    h≡T.Symbol ('def!'): ⍺(⍺⍺evDef)t
+    h≡T.Symbol ('let*'): ⍺(⍺⍺evLet)t
     ⍺(⍺⍺evFn)⍵
   }
 
@@ -128,6 +147,6 @@
      →0
    :EndTrap
   out:'Bye'
-   ⎕off
+   ⍝ ⎕off
   ∇
 :EndNamespace

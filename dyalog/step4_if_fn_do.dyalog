@@ -160,11 +160,11 @@
     D.env←env
     D.exp←exp
 
-    fn←stuff{
-      stuff←⍺⍺
+    fn←D{
+      D←⍺⍺
       bs←{⍺⍵}/(⍪2⊃D.params),(⍪⍵)
       env←⊃(eval evBinding)/(⌽bs),⊂D.env ⍝ Evaluate bindings
-      val env2←env eval stuff.exp
+      val env2←env eval D.exp
       val ⍺
     }
     val←fn #.T.mkFn⍬

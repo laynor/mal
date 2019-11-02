@@ -78,6 +78,10 @@
       ty v←⊃⍵
       #.T.Number (≢v)
     })e
+    e←('prn' defnp {
+      ⍞←#.m.print ⊃⍵
+      ⊃⍵
+    })e
     e←('nil' Env.def nil) e
     e
   }
@@ -184,20 +188,25 @@
 
   eval←{
     ty←⊃⍵
+
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃⍵: ⍵ ⍺             ⍝ keywords
       (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵)) ⍺
       throw E.nameError 2⊃⍵
     }⍵
+
     ty≡T.Vec: ⍺{
       vs env←(⍺(eval vEach)2⊃⍵)
       (T.Vec vs) env
     }⍵
+
     ty≡T.Map: ⍺{
       vs env←(⍺(eval vEach)2⊃⍵)
       (T.Map vs) env
     }⍵
+
     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evLst)⍵
+
     ⍵ ⍺
   }
 

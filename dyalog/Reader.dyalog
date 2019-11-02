@@ -1,7 +1,9 @@
  :Require file://debug.dyalog
  :Require file://Types.dyalog
+ :Require file://C.dyalog
  :Namespace Reader
    T←##.T
+   C←##.C
    Env←##.Env
    ⍝ Debug
    ⍝ Parser combinators
@@ -27,6 +29,7 @@
    map←{s r R←⍵⍵ ⍵ ⋄ s: s (⍺⍺ r) R ⋄ fail ⍵}
    pipe←{⍵⍵ map ⍺⍺ ⍵}
 
+
    ⍝ sequences
    seq←{                         ⍝ sequence opening
      s1 r1 R1←⍺⍺ ⍵
@@ -40,6 +43,17 @@
 
      s: (r,⊂) map ⍵⍵ R
      fail ⍵
+   }
+
+   str←{
+     S←⍺⍺
+     0=≢⍺⍺: Ok '' ⍵
+     {
+       x←⊃S
+       s r R←x only ⍵
+       s: {r,⍵} map ((1↓S)str) R
+       fail ⍵
+     }⍵
    }
 
    many←{                        ⍝ parse 0 or more occurrences of ⍺⍺
@@ -78,17 +92,6 @@
 
    ⍝ Lexing - basic chars
 
-   ⍝ Special chars
-   :Namespace C
-     BS←⎕ucs 8
-     TAB←⎕ucs 9
-     LF←⎕ucs 10
-     CR←⎕ucs 13
-     NL←⎕ucs 10
-     SPC←' '
-     WS←TAB,SPC
-     WSNL←NL,WS
-   :EndNamespace
 
    NL←∊∘C.NL ∆t
    isWS1←∊∘C.WSNL
@@ -104,15 +107,6 @@
      escapes←'trbn',⍵         ⍝ escape sequence) so that it is
      trans←C.(TAB CR BS LF),⍵ ⍝ translated to itself when it's not a
      1↑(⍵=escapes)/trans          ⍝ known escape sequence
-   }
-
-   unescape←{
-     unescape1←{
-       escapes←(('\'∘,)¨'trbn\"'),⍵
-       trans←C.(TAB CR BS LF),'\"',⍵
-       1↑(⍵=trans)/escapes
-     }
-     ∊unescape1¨⍵
    }
 
    ⍝ STRING : parse a string literal, escaped with the usual C rules.
@@ -158,6 +152,8 @@
    SIGN←∊∘'+-' ∆t
    INT←(DIGIT some) or (('-'⎕r'¯')∘∊ map (SIGN sq (DIGIT some)))
    SYM←∊map ((DIGIT many) seq SYMCHAR_NOT_DIGIT sq (SYMCHAR many))
+   TRUE←{T.Bool 1} map ('true'str)
+   FALSE←{T.Bool 0} map ('false'str)
 
    SPECIAL←∊∘specialChars ∆t
 
@@ -176,7 +172,7 @@
    tokType←⊃
    tokVal←{1↑1↓⍵}
 
-   tok←       WS or COMMENT or COMMA
+   tok←       WS or COMMENT or COMMA or TRUE or FALSE
    tok←tok or (T.Special map SPECIAL)
    tok←tok or ((T.Number,toInt) map INT)
    tok←tok or (T.Symbol map SYM)
@@ -186,6 +182,7 @@
 
    tt←{x←⍺ ⋄ {x=tokType⍵}∆t ⍵}
    String←T.String∘tt
+   Bool←T.Bool∘tt
    Num←T.Number∘tt
    Sym←T.Symbol∘tt
    isSpecial←{ty val←⍺ ⋄ (ty=T.Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
@@ -220,7 +217,7 @@
    WithMeta←{{T.List ((⊂T.Symbol 'with-meta'),⌽1↓⍵)} map ('^' Spec seq ⍺⍺ sq ⍺⍺) ⍵}
 
    Form←{
-     p←Num or Sym or String
+     p←Bool or Num or Sym or String
      p←p or (∇ List)  or (∇ Vec)        or (∇ Map)
      p←p or (∇ Quote) or (∇ Quasiquote) or (∇ UnquoteOrSpliceUnquote)
      p←p or (∇ Deref) or (∇WithMeta)

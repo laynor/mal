@@ -12,12 +12,6 @@
 
   empty←⊂0 2⍴'' 0
 
-  mkFn←{
-    ns←⎕NS''
-    ns.call←⍺⍺
-    T.Function ns
-  }
-
   def1←{((,⍺⍺) ⍵⍵)⍪⍵}
   in1←{(⊂,⍺)∊⍵[;1]}
   get1←{⊃⍺[⍺[;1]⍳⊂,⍵;2]}
@@ -26,7 +20,7 @@
   ⍝ get←{(⊃(in1∘⍵¨⍺)/⍺) get1 ⍵}
   get←{(⊃⍺[(⍵∘in1¨⍺)⍳1]) get1 ⍵}
   def←{((⊂ ⍺⍺ def1 ⍵⍵)⊃⍵),1↓⍵}
-  defn←{(⍺⍺ def (⍵⍵ mkFn⍬)) ⍵}
+  defn←{(⍺⍺ def (⍵⍵ T.mkFn⍬)) ⍵}
 
   call←{f←⍺⍺ get ⍵⍵ ⋄ ⍵⍵ f.call ⍵}
 

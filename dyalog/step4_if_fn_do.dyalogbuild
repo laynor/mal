@@ -1,0 +1,9 @@
+﻿DyalogBuild: 0.1
+ID         : Mal, Version=1.0
+Description: Built Mal workspace
+Defaults   : ⎕IO←⎕ML←1
+TARGET     : Distribution/step4_if_fn_do.dws
+
+NS    : step4_if_fn_do.dyalog, Target=#
+
+LX    : m.StartMAL ⍬

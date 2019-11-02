@@ -55,35 +55,39 @@
     ∧/2⍺⍺/⍵
   }
 
+  GLOBAL←1
+
   mkBaseEnv←{
-    e←('+' defOp (+/))   Env.empty
-    e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
-    e←('*' defOp (×/))           e
-    e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
-    e←('>'  defRelOp {∧/ 2>/⍵}) e
-    e←('<'  defRelOp {∧/ 2</⍵}) e
-    e←('<=' defRelOp {∧/ 2≤/⍵}) e
-    e←('>=' defRelOp {∧/ 2≥/⍵}) e
-    e←('='  defnp {T.bool 1=≢∪⍵}) e
-    e←('list' defnp {#.m.lst.list ⍵}) e
-    e←('list?' defnp {
+    e←GLOBAL
+    _←('+' defOp (+/)) e
+    _←('-' defOp (⊃1∘↑-(+/1∘↓))) e
+    _←('*' defOp (×/))           e
+    _←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
+    _←('>'  defRelOp {∧/ 2>/⍵}) e
+    _←('<'  defRelOp {∧/ 2</⍵}) e
+    _←('<=' defRelOp {∧/ 2≤/⍵}) e
+    _←('>=' defRelOp {∧/ 2≥/⍵}) e
+    _←('='  defnp {T.bool 1=≢∪⍵}) e
+    _←('list' defnp {#.m.lst.list ⍵}) e
+    _←('list?' defnp {
       ty v←⊃⍵
       T.bool (ty=#.T.List)
     }) e
-    e←('empty?' defnp {
+    _←('empty?' defnp {
       ty v←⊃⍵
       T.bool (ty=#.T.List)∧(0=≢v)
     }) e
-    e←('count' defnp {
+    _←('count' defnp {
       ty v←⊃⍵
       #.T.Number (≢v)
     })e
-    e←('prn' defnp {
+    _←('prn' defnp {
       ⍞←#.m.print ⊃⍵
       ⊃⍵
     })e
-    e←('nil' Env.def nil) e
-    e
+    _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
+    _←('nil' Env.def nil) e
+    GLOBAL
   }
 
   BaseEnv←mkBaseEnv⍬
@@ -127,10 +131,10 @@
   ⍝ TODO check name is actually a symbol
   evDef←{
     name form←⍵
-    val env1←⍺ ⍺⍺ form
-    env2←(((2⊃name) Env.def val) env1)
+    val _←⍺ ⍺⍺ form
+    _←(((2⊃name) Env.def val) ⍺)
     ⍝ ⎕←env2
-    val env2
+    val ⍺
   }
 
 
@@ -139,8 +143,7 @@
     eval←⍺⍺
     (_ bs) exp←⍵                ⍝ TODO check type!
     bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
-    ⎕←bs
-    env←Env.empty,⍺
+    env←Env.new⍺
     env←⊃(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
     res _←env ⍺⍺ exp
     res ⍺
@@ -167,8 +170,9 @@
     fn←D{
       D←⍺⍺
       bs←{⍺⍵}/(⍪2⊃D.params),(⍪⍵)
-      env←⊃(eval evBinding)/(⌽bs),⊂D.env ⍝ Evaluate bindings
-      val env2←env eval D.exp
+      env←Env.new D.env
+      _←(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
+      val _←env eval D.exp
       val ⍺
     }
     val←fn #.T.mkFn⍬

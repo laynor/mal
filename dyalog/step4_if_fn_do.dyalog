@@ -79,6 +79,7 @@
     }) e
     _←('count' defnp {
       ty v←⊃⍵
+      (⊃⍵)≡#.T.Symbol 'nil': #.T.Number 0
       #.T.Number (≢v)
     })e
     _←('prn' defnp {
@@ -169,7 +170,14 @@
 
     fn←D{
       D←⍺⍺
-      bs←{⍺⍵}/(⍪2⊃D.params),(⍪⍵)
+      ⍝ irest←((2∘⊃)¨2⊃D.params)⍳⊂,'&'
+      ⍝ ⎕←(1+irest)⊃2⊃D.params,⍬⍬
+      params←2⊃D.params
+      (_ x) y←¯2↑params
+      varargs←(1+x≡,'&')
+      params←varargs⊃params ((¯2↓params),⊂y)
+      args←varargs⊃⍵ (((¯1+⍴params)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴params)↓⍵)
+      bs←{⍺⍵}/(⍪params),(⍪args)
       env←Env.new D.env
       _←(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
       val _←env eval D.exp

@@ -3,9 +3,11 @@
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
+:Require file://C.dyalog
 :Namespace m
   T←#.T
   Env←#.Env
+  C←#.C
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
@@ -247,29 +249,32 @@
     _←GLOBAL eval (read not)
     ⍬
   }
-
-  ∇R←StartMAL env;inp;prompt;res;out;⎕TRAP
-   env←(1+0=≢env)⊃env GLOBAL
+  ∇R←repIO recur
    prompt←'user> '
    :Trap 1004
-     ⍞←prompt
-     inp←(≢prompt)↓⍞
-     →(inp≡'')/out
-     →(inp≡'(exit)')/out
-     res newEnv←env rep inp
-     ⍝ ⍞←res
-     ⍞←⎕ucs 10
 
-     StartMAL newEnv
-     →0
+     :If recur=0
+       R←0
+     :Else
+       ⍞←prompt
+       inp←(≢prompt)↓⍞
+       :If (⊂inp)∊'' '(exit)'
+         R←0
+       :Else
+         res _←GLOBAL rep inp
+         ⍞←C.LF
+         R←recur+1
+       :EndIf
+     :EndIf
+
    :EndTrap
-  out:'Bye'
-   ⍝ ⎕off
   ∇
 
   ∇Start
    ⎕←'MA(P)L 0.1'
    init⍬
-   StartMAL GLOBAL
+   _←repIO⍣≡1
+   'Bye'
+   ⍝ ⎕off
   ∇
 :EndNamespace

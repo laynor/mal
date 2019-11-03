@@ -104,6 +104,10 @@
       ⎕←#.m.print ⊃⍵
       #.T.nil
     })e
+    _←('pr-str' defnp {
+      v←#.m.print ⊃⍵
+      #.T.String v
+    })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
     _←('nil' Env.def nil) e
     GLOBAL

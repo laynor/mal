@@ -71,46 +71,30 @@
 
   mkBaseEnv←{
     e←GLOBAL
-    _←('+' defOp (+/)) e
-    _←('-' defOp (⊃1∘↑-(+/1∘↓))) e
-    _←('*' defOp (×/))           e
-    _←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
-    _←('>'  defRelOp {∧/ 2>/⍵}) e
-    _←('<'  defRelOp {∧/ 2</⍵}) e
-    _←('<=' defRelOp {∧/ 2≤/⍵}) e
-    _←('>=' defRelOp {∧/ 2≥/⍵}) e
-    _←('='  defnp {#.T.bool ∧/ 2 #.m.eq/⍵}) e
-    _←('list' defnp {#.m.lst.list ⍵}) e
-    _←('list' defnp {#.m.lst.list ⍵}) e
-    _←('list?' defnp {
-      ty v←⊃⍵
-      T.bool (ty=#.T.List)
-    }) e
-    _←('empty?' defnp {
-      ty v←⊃⍵
-      T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)
-    }) e
-    _←('count' defnp {
+    _←('nil'     Env.def  nil) e
+    _←('+'       defOp    (+/)) e
+    _←('-'       defOp    (⊃1∘↑-(+/1∘↓))) e
+    _←('*'       defOp    (×/))           e
+    _←('/'       defOp    (⊃1∘↑÷(×/1∘↓))) e
+    _←('>'       defRelOp {∧/ 2>/⍵}) e
+    _←('<'       defRelOp {∧/ 2</⍵}) e
+    _←('<='      defRelOp {∧/ 2≤/⍵}) e
+    _←('>='      defRelOp {∧/ 2≥/⍵}) e
+    _←('='       defnp    {#.T.bool ∧/ 2 #.m.eq/⍵}) e
+    _←('list'    defnp    {#.m.lst.list ⍵}) e
+    _←('list'    defnp    {#.m.lst.list ⍵}) e
+    _←('list?'   defnp    {T.bool #.T.List=⊃⊃⍵}) e
+    _←('empty?'  defnp    {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
+    _←('str'     defnp    {#.T.String (⊃,/#.Printer.print¨⍵)})e
+    _←('pr-str'  defnp    {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'     defnp {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('println' defnp {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('count'   defnp {
       ty v←⊃⍵
       (⊃⍵)≡#.T.Symbol 'nil': #.T.Number 0
       #.T.Number (≢v)
     })e
-    _←('str' defnp {
-      #.T.String (⊃,/#.Printer.print¨⍵)
-    })e
-    _←('pr-str' defnp {
-      #.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)
-    })e
-    _←('prn' defnp {
-      ⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)
-      #.T.nil
-    })e
-    _←('println' defnp {
-      ⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵)
-      #.T.nil
-    })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
-    _←('nil' Env.def nil) e
     GLOBAL
   }
 

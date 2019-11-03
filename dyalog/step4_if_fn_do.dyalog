@@ -21,7 +21,7 @@
 
   read←##.Reader.read
 
-  mkPureFn←{(⍺⍺ ⍵) ⍺}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
+  mkPureFn←{(⍺⍺ ⍵)}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
 
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
@@ -67,7 +67,7 @@
     }
     ty1 v1←⍺
     ty2 v2←⍵
-    ∧/ty1 ty2∊T.List T.Vec: v1 eqLst v2
+    ∧/ty1 ty2∊T.List T.Vec: (0,v1) eqLst (0,v2)
     ∧/ty1 ty2=T.Map: v1 eqLst v2
     ⍺≡⍵
   }
@@ -83,7 +83,7 @@
     _←('<'       defRelOp {∧/ 2</⍵}) e
     _←('<='      defRelOp {∧/ 2≤/⍵}) e
     _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defnp    {#.T.bool ∧/ 2 #.m.eq/⍵}) e
+    _←('='       defnp    {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
     _←('list'    defnp    {#.m.lst.list ⍵}) e
     _←('list'    defnp    {#.m.lst.list ⍵}) e
     _←('list?'   defnp    {T.bool #.T.List=⊃⊃⍵}) e
@@ -109,9 +109,9 @@
     eval←⍺⍺
     0=≢⍵:⍬ ⍺
     {
-      v e1←env eval ⊃vec
-      vs e2←env (eval vEach) (1↓vec)
-      ((⊂v),vs) e2
+      v←env eval ⊃vec
+      vs←env (eval vEach) (1↓vec)
+      ((⊂v),vs)
     }⍬
   }
 
@@ -120,19 +120,19 @@
     args←2⊃lst.cdr ⍵
     eval←⍺⍺
     env←⍺
-    (ty val) env1←env eval farg
-    T.Function≠ty: (T.Error 'Type error') env1
+    (ty val)←env eval farg
+    T.Function≠ty: (T.Error 'Type error') env
     {
-      args env2←env1 (eval vEach) args
-      env2 val.call args
+      args←env∘eval¨args
+      env val.call args
     }⍬
   }
 
   ⍝ env (eval evBinding) (name form)
   evBinding←{
-    name form←⍺
-    val env1←⍵ ⍺⍺ form
-    (((2⊃name) Env.def val) env1)
+    name form←⍵
+    val←⍺ ⍺⍺ form
+    (((2⊃name) Env.def val) ⍺)
   }
 
   ∇throw error
@@ -142,30 +142,34 @@
   ⍝ TODO check name is actually a symbol
   evDef←{
     name form←⍵
-    val _←⍺ ⍺⍺ form
+    val←⍺ ⍺⍺ form
     _←(((2⊃name) Env.def val) ⍺)
     ⍝ ⎕←env2
-    val ⍺
+    val
   }
 
+  SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}        ⍝ safe each: do not execute when empty vector
 
   ⍝ TODO type check names
   evLet←{
     eval←⍺⍺
     (_ bs) exp←⍵                ⍝ TODO check type!
+    ⍝ B←((0.5×≢bs) 2⍴bs)
+    ⍝ N←B[;1]                     ⍝ names
+    ⍝ V←B[;2]                     ⍝ values
     bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
     env←Env.new⍺
-    env←⊃(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
-    res _←env ⍺⍺ exp
-    res ⍺
+    _←(env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
+    env ⍺⍺ exp
   }
 
-  evDo←{⊃(⍺⍺{_ env←⍵⋄env ⍺⍺ ⍺})/(⌽⍵),⊂0 ⍺}
+  ⍝ evDo←{⊃(⍺⍺{_ env←⍵⋄env ⍺⍺ ⍺})/(⌽⍵),⊂0 ⍺}
+  evDo←{⊃¯1↑⍺∘⍺⍺¨⍵}
   evIf←{
     cond then else←3↑⍵,⊂nil
-    v env1←⍺ ⍺⍺ cond
-    ~(⊂v)∊nil T.false: env1 ⍺⍺ then
-    env1 ⍺⍺ else
+    v←⍺ ⍺⍺ cond
+    ~(⊂v)∊nil T.false: ⍺ ⍺⍺ then
+    ⍺ ⍺⍺ else
   }
 
   evFnStar←{
@@ -187,12 +191,12 @@
       A←V⊃⍵ (((¯1+⍴P)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓⍵) ⍝ actual args
       bs←{⍺⍵}/(⍪P),(⍪A)
       env←Env.new D.env
-      _←(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
-      val _←env eval D.exp
-      val ⍺
+      _←env∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
+      val←env eval D.exp
+      val
     }
     val←fn #.T.mkFn⍬
-    val env
+    val
   }
 
   evLst←{
@@ -210,24 +214,18 @@
     ty←⊃⍵
 
     ty≡T.Symbol: ⍺{
-      ':'=⊃2⊃⍵: ⍵ ⍺             ⍝ keywords
-      (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵)) ⍺
+      ':'=⊃2⊃⍵: ⍵             ⍝ keywords
+      (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵))
       throw E.nameError 2⊃⍵
     }⍵
 
-    ty≡T.Vec: ⍺{
-      vs env←(⍺(eval vEach)2⊃⍵)
-      (T.Vec vs) env
-    }⍵
+    ty≡T.Vec: T.Vec (⍺eval¨2⊃⍵)
 
-    ty≡T.Map: ⍺{
-      vs env←(⍺(eval vEach)2⊃⍵)
-      (T.Map vs) env
-    }⍵
+    ty≡T.Map: T.Map (⍺eval¨2⊃⍵)
 
     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evLst)⍵
 
-    ⍵ ⍺
+    ⍵
   }
 
   print←##.Printer.pprint
@@ -235,9 +233,9 @@
 
   ∇R←env rep input
    :Trap 100
-     v newEnv←env eval read input
+     v←env eval read input
      print v
-     R←v newEnv
+     R←v
    :Case 100
      ⎕←⎕dmx.EM
      R←(T.Symbol ,⊂'nil') env
@@ -265,7 +263,7 @@
        :Case '(exit)'
          R←¯1
        :Else
-         res _←GLOBAL rep inp
+         res←GLOBAL rep inp
          ⍞←C.LF
          R←recur+1
        :EndSelect

@@ -104,14 +104,10 @@
   evFn←{
     farg←lst.car ⍵
     args←2⊃lst.cdr ⍵
-    eval←⍺⍺
-    env←⍺
-    (ty val)←env eval farg
-    T.Function≠ty: (T.Error 'Type error') env1
-    ⍺{
-      args←⍺(eval vEach) args
-      ⍺ val.call args
-    }⍬
+    (ty val)←⍺ ⍺⍺ farg
+
+    T.Function≠ty: (T.Error 'Type error') ⍺
+    ⍺val.call ⍺∘⍺⍺¨args
   }
 
   ⍝ env (eval evBinding) (name form)

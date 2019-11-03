@@ -198,10 +198,11 @@
     ⍝ FnStar function call
     P←2⊃F.params
     (_ x) y←¯2↑P
-    V←(1+x≡,'&')              ⍝ varargs?
-    P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
-    A←V⊃A (((¯1+⍴P)↑A),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓A) ⍝ actual args
-    bs←{⍺⍵}/(⍪P),(⍪A)
+    V←(1+x≡,'&')                    ⍝ varargs?
+    L←lst.list (⊂T.Symbol 'list')∘, ⍝ enclose args in (list ...)
+    P←V⊃P ((¯2↓P),⊂y)               ⍝ param names
+    A←V⊃A (((¯1+⍴P)↑A),⊂L(¯1+⍴P)↓A) ⍝ actual args
+    bs←{⍺⍵}/(⍪P),(⍪A)               ⍝ list of pairs
     newEnv←Env.new F.env
     _←⍺ newEnv∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
     newEnv eval F.exp

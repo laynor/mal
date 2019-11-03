@@ -107,11 +107,11 @@
     ⍺ f.call ⍺∘⍺⍺¨A
   }
 
-  ⍝ env (eval evBinding) (name form)
   evBinding←{
     name form←⍵
-    val←⍺ ⍺⍺ form
-    ((2⊃name) Env.def val) ⍺
+    evEnv destEnv←⍺
+    val←evEnv ⍺⍺ form
+    ((2⊃name) Env.def val) destEnv
   }
 
   ∇throw error
@@ -129,60 +129,18 @@
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}        ⍝ safe each: do not execute when empty vector
 
   ⍝ TODO type check names
-  evLet←{
-    eval←⍺⍺
-    (_ bs) exp←⍵                ⍝ TODO check type!
-    ⍝ B←((0.5×≢bs) 2⍴bs)
-    ⍝ N←B[;1]                     ⍝ names
-    ⍝ V←B[;2]                     ⍝ values
-    bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
-    env←Env.new⍺
-    _←(env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
-    env ⍺⍺ exp
-  }
-
-  ⍝ evDo←{⊃(⍺⍺{_ env←⍵⋄env ⍺⍺ ⍺})/(⌽⍵),⊂0 ⍺}
-  evDo←{⊃¯1↑⍺∘⍺⍺¨⍵}
-  evIf←{
-    cond then else←3↑⍵,⊂nil
-    v←⍺ ⍺⍺ cond
-    ~(⊂v)∊nil T.false: ⍺ ⍺⍺ then
-    ⍺ ⍺⍺ else
-  }
 
   evFnStar←{
     env←⍺
     params exp←⍵
     eval←⍺⍺
 
-    D←⎕ns''
-    D.params←params
-    D.env←env
-    D.exp←exp
+    F←⎕ns''
+    F.params←params
+    F.env←env
+    F.exp←exp
 
-    fn←D{
-      D←⍺⍺
-      P←2⊃D.params
-      (_ x) y←¯2↑P
-      V←(1+x≡,'&')              ⍝ varargs?
-      P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
-      A←V⊃⍵ (((¯1+⍴P)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓⍵) ⍝ actual args
-      bs←{⍺⍵}/(⍪P),(⍪A)
-      env←Env.new D.env
-      _←env∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
-      val←env eval D.exp
-      val
-    }
-    fn #.T.mkFn⍬
-  }
-
-  evLst←{
-    h←lst.car ⍵
-    _ t←lst.cdr ⍵
-    h≡T.Symbol 'def!': ⍺(⍺⍺evDef)t
-    h≡T.Symbol 'if':   ⍺(⍺⍺evIf)t
-    h≡T.Symbol 'fn*':  ⍺(⍺⍺evFnStar)t
-    ⍺(⍺⍺evFn)⍵
+    T.Function F
   }
 
   eval←{
@@ -201,11 +159,16 @@
     (ty≢T.List): ⍵
 
     0=≢2⊃⍵: ⍵
+
+    T.Symbol 'def!'≡lst.car⍵: ⍺(eval evDef)2⊃lst.cdr⍵
+
+    T.Symbol 'fn*' ≡lst.car⍵: ⍺(eval evFnStar)2⊃lst.cdr⍵
+
     T.Symbol 'let*'≡lst.car⍵: ⍺{
       (_ bs) exp←1↓2⊃⍵                ⍝ TODO check type!
       bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
       env←Env.new⍺
-      _←(env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
+      _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
       env eval exp
     }⍵
     T.Symbol 'do'≡lst.car⍵: ⍺{
@@ -222,9 +185,26 @@
       ⍺eval else
     }⍵
 
-    0<≢2⊃⍵: ⍺(∇evLst)⍵
+    FS←lst.car ⍵
+    A←2⊃lst.cdr ⍵
+    (ty F)←⍺ eval FS
+    ty=T.Builtin: ⍺ F.call ⍺∘eval¨A
+    ty≠T.Function: (T.Error 'Type error') ⍺
 
-    ⍵
+    ⍝ FnStar function call
+    ⍝ ⍺ f.call ⍺∘eval¨A
+
+    ⍺{
+      P←2⊃F.params
+      (_ x) y←¯2↑P
+      V←(1+x≡,'&')              ⍝ varargs?
+      P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
+      A←V⊃A (((¯1+⍴P)↑A),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓A) ⍝ actual args
+      bs←{⍺⍵}/(⍪P),(⍪A)
+      newEnv←Env.new F.env
+      _←⍺ newEnv∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
+      newEnv eval F.exp
+    }⍵
   }
 
   print←##.Printer.pprint

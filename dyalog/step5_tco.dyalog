@@ -180,8 +180,8 @@
     h←lst.car ⍵
     _ t←lst.cdr ⍵
     h≡T.Symbol 'def!': ⍺(⍺⍺evDef)t
-    h≡T.Symbol 'let*': ⍺(⍺⍺evLet)t
-    h≡T.Symbol 'do':   ⍺(⍺⍺evDo)t
+    ⍝ h≡T.Symbol 'let*': ⍺(⍺⍺evLet)t
+    ⍝ h≡T.Symbol 'do':   ⍺(⍺⍺evDo)t
     h≡T.Symbol 'if':   ⍺(⍺⍺evIf)t
     h≡T.Symbol 'fn*':  ⍺(⍺⍺evFnStar)t
     ⍺(⍺⍺evFn)⍵
@@ -200,7 +200,32 @@
 
     ty≡T.Map: T.Map (⍺eval¨2⊃⍵)
 
-    (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evLst)⍵
+    (ty≢T.List): ⍵
+
+    0=≢2⊃⍵: ⍵
+
+    'let*'≡2⊃⊃2⊃⍵: ⍺{
+      (_ bs) exp←1↓2⊃⍵                ⍝ TODO check type!
+      bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
+      env←Env.new⍺
+      _←(env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
+      env eval exp
+    }⍵
+    'do'≡2⊃⊃2⊃⍵: ⍺{
+      forms←1↓2⊃⍵
+      x←⍺∘eval¨ forms
+      0=≢x: T.nil
+      ⊃¯1↑x
+    }⍵
+
+    'if'≡2⊃⊃2⊃⍵: ⍺{
+      cond then else←3↑1↓(2⊃⍵),⊂T.nil
+      c←⍺eval cond
+      ~(⊂c)∊nil T.false: ⍺eval then
+      ⍺eval else
+    }⍵
+
+    0<≢2⊃⍵: ⍺(∇evLst)⍵
 
     ⍵
   }

@@ -177,14 +177,12 @@
 
     fn←D{
       D←⍺⍺
-      ⍝ irest←((2∘⊃)¨2⊃D.params)⍳⊂,'&'
-      ⍝ ⎕←(1+irest)⊃2⊃D.params,⍬⍬
-      params←2⊃D.params
-      (_ x) y←¯2↑params
-      varargs←(1+x≡,'&')
-      params←varargs⊃params ((¯2↓params),⊂y)
-      args←varargs⊃⍵ (((¯1+⍴params)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴params)↓⍵)
-      bs←{⍺⍵}/(⍪params),(⍪args)
+      P←2⊃D.params
+      (_ x) y←¯2↑P
+      V←(1+x≡,'&')              ⍝ varargs?
+      P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
+      A←V⊃⍵ (((¯1+⍴P)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓⍵) ⍝ actual args
+      bs←{⍺⍵}/(⍪P),(⍪A)
       env←Env.new D.env
       _←(eval evBinding)/(⌽bs),⊂env ⍝ Evaluate bindings
       val _←env eval D.exp
@@ -197,11 +195,11 @@
   evLst←{
     h←lst.car ⍵
     _ t←lst.cdr ⍵
-    h≡T.Symbol ('def!'): ⍺(⍺⍺evDef)t
-    h≡T.Symbol ('let*'): ⍺(⍺⍺evLet)t
-    h≡T.Symbol ('do'): ⍺(⍺⍺evDo)t
-    h≡T.Symbol ('if'): ⍺(⍺⍺evIf)t
-    h≡T.Symbol ('fn*'): ⍺(⍺⍺evFnStar)t
+    h≡T.Symbol 'def!': ⍺(⍺⍺evDef)t
+    h≡T.Symbol 'let*': ⍺(⍺⍺evLet)t
+    h≡T.Symbol 'do':   ⍺(⍺⍺evDo)t
+    h≡T.Symbol 'if':   ⍺(⍺⍺evIf)t
+    h≡T.Symbol 'fn*':  ⍺(⍺⍺evFnStar)t
     ⍺(⍺⍺evFn)⍵
   }
 

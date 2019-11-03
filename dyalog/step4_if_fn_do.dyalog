@@ -64,8 +64,8 @@
     ty1 v1←⍺
     ty2 v2←⍵
     ∧/ty1 ty2∊T.List T.Vec: (0,v1) eqLst (0,v2)
-    ∧/ty1 ty2=T.Map: v1 eqLst v2
-    ⍺≡⍵
+    ∧/ty1 ty2=T.Map:         v1 eqLst v2
+                             ⍺≡⍵
   }
 
   mkBaseEnv←{
@@ -98,18 +98,6 @@
   }
 
   BaseEnv←mkBaseEnv⍬
-
-  vEach←{
-    env←⍺
-    vec←⍵
-    eval←⍺⍺
-    0=≢⍵:⍬ ⍺
-    {
-      v←env eval ⊃vec
-      vs←env (eval vEach) (1↓vec)
-      ((⊂v),vs)
-    }⍬
-  }
 
   evFn←{
     farg←lst.car ⍵

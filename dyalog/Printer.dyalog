@@ -22,7 +22,7 @@
     t≡T.List:   '(',(trim⍕pprint¨ v),')'
     t≡T.Vec:    '[',(trim⍕pprint¨ v),']'
     t≡T.Map:    '{',(trim⍕pprint¨ v),'}'
-    t≡T.Function: '#<Funciton ',⍕v,'>'
+    t≡T.Function: '#<Funciton ',(⍕v),'>'
     ⍵≡T.true: 'true'
     ⍵≡T.false: 'false'
     t≡T.Error:  'ERROR: ', v

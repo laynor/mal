@@ -57,6 +57,18 @@
 
   GLOBAL←1
 
+  eq←{
+    eqLst←{
+      (≢⍺)≠≢⍵: 0
+      ∧/#.m.eq/(⍪⍺),⍪⍵
+    }
+    ty1 v1←⍺
+    ty2 v2←⍵
+    ∧/ty1 ty2∊T.List T.Vec: v1 eqLst v2
+    ∧/ty1 ty2=T.Map: v1 eqLst v2
+    ⍺≡⍵
+  }
+
   mkBaseEnv←{
     e←GLOBAL
     _←('+' defOp (+/)) e
@@ -68,6 +80,7 @@
     _←('<=' defRelOp {∧/ 2≤/⍵}) e
     _←('>=' defRelOp {∧/ 2≥/⍵}) e
     _←('='  defnp {T.bool 1=≢∪⍵}) e
+    _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list?' defnp {
       ty v←⊃⍵
@@ -83,7 +96,7 @@
       #.T.Number (≢v)
     })e
     _←('prn' defnp {
-      ⍞←#.m.print ⊃⍵
+      ⎕←#.m.print ⊃⍵
       ⊃⍵
     })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e

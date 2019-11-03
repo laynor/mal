@@ -105,7 +105,7 @@
     })e
     _←('pr-str' defnp {
       0=≢⍵: #.T.String ''
-      #.T.String (⊃,/#.m.print¨⍵)
+      #.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)
     })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
     _←('nil' Env.def nil) e

@@ -88,6 +88,7 @@
     _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
     _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
     _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('read-string' defn {#.m.read 2⊃⊃⍵}) e
     _←('eval'    defn     {⍺#.m.eval⊃⍵}) e
     _←('count'   defn     {
       ty v←⊃⍵

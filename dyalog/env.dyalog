@@ -22,6 +22,13 @@
    R←id
   ∇
 
+  ∇R←dispose id
+   :if id=⍴ENV
+     ENV←¯1↓ENV
+   :endif
+   R←⍴ENV
+  ∇
+
   ∇R←(name def val) id
    def1←{((,⍺⍺) ⍵⍵)⍪⍵}
    env←id⊃ENV

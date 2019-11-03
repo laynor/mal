@@ -91,10 +91,10 @@
     _←('println' defnp {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
     _←('count'   defnp {
       ty v←⊃⍵
-      (⊃⍵)≡#.T.Symbol 'nil': #.T.Number 0
-      #.T.Number (≢v)
+      #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
+                           #.T.Number (≢v)
     })e
-    _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
+    _←('envs' defnp {⎕←#.Env.ENV ⋄ #.T.nil}) e
     GLOBAL
   }
 

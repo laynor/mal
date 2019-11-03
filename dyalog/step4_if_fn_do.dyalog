@@ -81,8 +81,8 @@
     _←('>=' defRelOp {∧/ 2≥/⍵}) e
     _←('='  defnp {#.T.bool ∧/ 2 #.m.eq/⍵}) e
     _←('not' defnp {
-      ⍵≡#.T.nil: #.T.true
-      ⍵≡#.T.false: #.T.true
+      #.T.nil≡⊃⍵: #.T.true
+      #.T.false≡⊃⍵: #.T.true
       #.T.false
     }) e
     _←('list' defnp {#.m.lst.list ⍵}) e

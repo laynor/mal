@@ -21,6 +21,7 @@
     t≡T.List:   '(',(trim⍕print_readably¨ v),')'
     t≡T.Vec:    '[',(trim⍕print_readably¨ v),']'
     t≡T.Map:    '{',(trim⍕print_readably¨ v),'}'
+    t≡T.Builtin: '#<Builtin ',(⍕v),'>'
     t≡T.Function: '#<Funciton ',(⍕v),'>'
     ⍵≡T.true: 'true'
     ⍵≡T.false: 'false'

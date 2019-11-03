@@ -103,7 +103,7 @@
     F←lst.car ⍵
     A←2⊃lst.cdr ⍵
     (ty f)←⍺ ⍺⍺ F
-    T.Function≠ty: (T.Error 'Type error') ⍺
+    ~ty∊T.Function T.Builtin: (T.Error 'Type error') ⍺
     ⍺ f.call ⍺∘⍺⍺¨A
   }
 
@@ -180,8 +180,6 @@
     h←lst.car ⍵
     _ t←lst.cdr ⍵
     h≡T.Symbol 'def!': ⍺(⍺⍺evDef)t
-    ⍝ h≡T.Symbol 'let*': ⍺(⍺⍺evLet)t
-    ⍝ h≡T.Symbol 'do':   ⍺(⍺⍺evDo)t
     h≡T.Symbol 'if':   ⍺(⍺⍺evIf)t
     h≡T.Symbol 'fn*':  ⍺(⍺⍺evFnStar)t
     ⍺(⍺⍺evFn)⍵

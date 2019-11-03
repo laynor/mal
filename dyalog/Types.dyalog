@@ -1,5 +1,5 @@
  :Namespace T
-   Special Symbol Number String List Vec Map Function Bool Error←⍳10
+   Special Builtin Symbol Number String List Vec Map Function Bool Error←⍳11
    true←Bool 1
    false←Bool 0
    nil←Symbol 'nil'
@@ -13,12 +13,13 @@
      ns←⎕NS''
      ns.call←⍺⍺
      ns.data←⍵
-     Function ns
+     Builtin ns
    }
 
    typeName←{
      ⍵≡Error: 'Error'
      ⍵≡Function: 'Function'
+     ⍵≡Builtin: 'Builtin'
      ⍵≡List: 'List'
      ⍵≡Map: 'Map'
      ⍵≡Number: 'Number'

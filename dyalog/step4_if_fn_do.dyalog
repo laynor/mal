@@ -24,9 +24,10 @@
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
-                  #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
+    N←#.T.Number
+    nonNumber←(N=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
+                  N #.m.E.ty (⊃nonNumber⊃⍵)
   }
 
   mkRelFn←{
@@ -87,9 +88,9 @@
     _←('empty?'  defnp    {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
     _←('str'     defnp    {#.T.String (⊃,/#.Printer.print¨⍵)})e
     _←('pr-str'  defnp    {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defnp {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defnp {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('count'   defnp {
+    _←('prn'     defnp    {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('println' defnp    {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('count'   defnp    {
       ty v←⊃⍵
       #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
                            #.T.Number (≢v)

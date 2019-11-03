@@ -80,11 +80,6 @@
     _←('<=' defRelOp {∧/ 2≤/⍵}) e
     _←('>=' defRelOp {∧/ 2≥/⍵}) e
     _←('='  defnp {#.T.bool ∧/ 2 #.m.eq/⍵}) e
-    _←('not' defnp {
-      #.T.nil≡⊃⍵: #.T.true
-      #.T.false≡⊃⍵: #.T.true
-      #.T.false
-    }) e
     _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list?' defnp {
@@ -104,9 +99,13 @@
       ⎕←#.m.print ⊃⍵
       #.T.nil
     })e
+    _←('str' defnp {
+      0=≢⍵: #.T.String ''
+      #.T.String (⊃,/#.Printer.print¨⍵)
+    })e
     _←('pr-str' defnp {
-      v←#.m.print ⊃⍵
-      #.T.String v
+      0=≢⍵: #.T.String ''
+      #.T.String (⊃,/#.m.print¨⍵)
     })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
     _←('nil' Env.def nil) e
@@ -258,8 +257,14 @@
    :EndTrap
   ∇
 
+  init←{
+    not ←'(def! not (fn* [o] (if o false true)))'
+    _←GLOBAL eval (read not)
+    ⍬
+  }
+
   ∇R←StartMAL env;inp;prompt;res;out;⎕TRAP
-   env←(1+0=≢env)⊃env BaseEnv
+   env←(1+0=≢env)⊃env GLOBAL
    prompt←'user> '
    :Trap 1004
      ⍞←prompt
@@ -275,5 +280,11 @@
    :EndTrap
   out:'Bye'
    ⍝ ⎕off
+  ∇
+
+  ∇Start
+   ⎕←'MA(P)L 0.1'
+   init⍬
+   StartMAL GLOBAL
   ∇
 :EndNamespace

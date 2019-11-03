@@ -253,28 +253,34 @@
    prompt←'user> '
    :Trap 1004
 
-     :If recur=0
-       R←0
+     :If recur≤0
+       R←recur
      :Else
        ⍞←prompt
        inp←(≢prompt)↓⍞
-       :If (⊂inp)∊'' '(exit)'
+       :Select inp
+       :Case ''
          R←0
+       :Case '(exit)'
+         R←¯1
        :Else
          res _←GLOBAL rep inp
          ⍞←C.LF
          R←recur+1
-       :EndIf
+       :EndSelect
      :EndIf
-
+   :Else
+     R←¯2
    :EndTrap
   ∇
 
-  ∇Start
+  ∇mapl
    ⎕←'MA(P)L 0.1'
    init⍬
-   _←repIO⍣≡1
+   r←repIO⍣≡1
    'Bye'
-   ⍝ ⎕off
+   :If r<0
+     ⎕off
+   :EndIf
   ∇
 :EndNamespace

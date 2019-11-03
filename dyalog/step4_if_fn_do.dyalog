@@ -249,6 +249,7 @@
     _←GLOBAL eval (read not)
     ⍬
   }
+
   ∇R←repIO recur
    prompt←'user> '
    :Trap 1004

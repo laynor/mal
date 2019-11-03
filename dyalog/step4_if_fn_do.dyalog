@@ -100,18 +100,18 @@
   BaseEnv←mkBaseEnv⍬
 
   evFn←{
-    farg←lst.car ⍵
-    args←2⊃lst.cdr ⍵
-    (ty val)←⍺ ⍺⍺ farg
+    F←lst.car ⍵
+    A←2⊃lst.cdr ⍵
+    (ty f)←⍺ ⍺⍺ F
     T.Function≠ty: (T.Error 'Type error') ⍺
-    ⍺ val.call ⍺∘⍺⍺¨args
+    ⍺ f.call ⍺∘⍺⍺¨A
   }
 
   ⍝ env (eval evBinding) (name form)
   evBinding←{
     name form←⍵
     val←⍺ ⍺⍺ form
-    (((2⊃name) Env.def val) ⍺)
+    ((2⊃name) Env.def val) ⍺
   }
 
   ∇throw error
@@ -123,7 +123,6 @@
     name form←⍵
     val←⍺ ⍺⍺ form
     _←(((2⊃name) Env.def val) ⍺)
-    ⍝ ⎕←env2
     val
   }
 
@@ -174,8 +173,7 @@
       val←env eval D.exp
       val
     }
-    val←fn #.T.mkFn⍬
-    val
+    fn #.T.mkFn⍬
   }
 
   evLst←{

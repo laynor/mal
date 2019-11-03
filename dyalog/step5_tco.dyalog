@@ -21,9 +21,6 @@
 
   read←##.Reader.read
 
-  mkPureFn←{(⍺⍺ ⍵)}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
-
-
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
     N←#.T.Number
@@ -39,9 +36,8 @@
   }
 
   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
-  defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
-  defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
-  defRelOp←{(⍺⍺ defnp (⍵⍵ mkRelFn)) ⍵}
+  defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
+  defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
   nil←(read 'nil')
 
@@ -68,8 +64,8 @@
     ty1 v1←⍺
     ty2 v2←⍵
     ∧/ty1 ty2∊T.List T.Vec: (0,v1) eqLst (0,v2)
-    ∧/ty1 ty2=T.Map: v1 eqLst v2
-    ⍺≡⍵
+    ∧/ty1 ty2=T.Map:         v1 eqLst v2
+                             ⍺≡⍵
   }
 
   mkBaseEnv←{
@@ -83,56 +79,39 @@
     _←('<'       defRelOp {∧/ 2</⍵}) e
     _←('<='      defRelOp {∧/ 2≤/⍵}) e
     _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defnp    {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'    defnp    {#.m.lst.list ⍵}) e
-    _←('list'    defnp    {#.m.lst.list ⍵}) e
-    _←('list?'   defnp    {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'  defnp    {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'     defnp    {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'  defnp    {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defnp    {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defnp    {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('count'   defnp    {
+    _←('='       defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
+    _←('list'    defn     {#.m.lst.list ⍵}) e
+    _←('list'    defn     {#.m.lst.list ⍵}) e
+    _←('list?'   defn     {T.bool #.T.List=⊃⊃⍵}) e
+    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
+    _←('str'     defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
+    _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('count'   defn     {
       ty v←⊃⍵
       #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
                            #.T.Number (≢v)
     })e
-    _←('envs' defnp {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs' defn  {⎕←#.Env.ENV ⋄ #.T.nil}) e
     GLOBAL
   }
 
   BaseEnv←mkBaseEnv⍬
 
-  vEach←{
-    env←⍺
-    vec←⍵
-    eval←⍺⍺
-    0=≢⍵:⍬ ⍺
-    {
-      v←env eval ⊃vec
-      vs←env (eval vEach) (1↓vec)
-      ((⊂v),vs)
-    }⍬
-  }
-
   evFn←{
-    farg←lst.car ⍵
-    args←2⊃lst.cdr ⍵
-    eval←⍺⍺
-    env←⍺
-    (ty val)←env eval farg
-    T.Function≠ty: (T.Error 'Type error') env
-    {
-      args←env∘eval¨args
-      env val.call args
-    }⍬
+    F←lst.car ⍵
+    A←2⊃lst.cdr ⍵
+    (ty f)←⍺ ⍺⍺ F
+    T.Function≠ty: (T.Error 'Type error') ⍺
+    ⍺ f.call ⍺∘⍺⍺¨A
   }
 
   ⍝ env (eval evBinding) (name form)
   evBinding←{
     name form←⍵
     val←⍺ ⍺⍺ form
-    (((2⊃name) Env.def val) ⍺)
+    ((2⊃name) Env.def val) ⍺
   }
 
   ∇throw error
@@ -144,7 +123,6 @@
     name form←⍵
     val←⍺ ⍺⍺ form
     _←(((2⊃name) Env.def val) ⍺)
-    ⍝ ⎕←env2
     val
   }
 
@@ -195,8 +173,7 @@
       val←env eval D.exp
       val
     }
-    val←fn #.T.mkFn⍬
-    val
+    fn #.T.mkFn⍬
   }
 
   evLst←{

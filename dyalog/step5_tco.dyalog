@@ -188,27 +188,26 @@
     FS←lst.car ⍵
     A←2⊃lst.cdr ⍵
     (ty F)←⍺ eval FS
+
+    ⍝ Builtin function call
     ty=T.Builtin: ⍺ F.call ⍺∘eval¨A
+
+    ⍝ Type error when non callable
     ty≠T.Function: (T.Error 'Type error') ⍺
 
     ⍝ FnStar function call
-    ⍝ ⍺ f.call ⍺∘eval¨A
-
-    ⍺{
-      P←2⊃F.params
-      (_ x) y←¯2↑P
-      V←(1+x≡,'&')              ⍝ varargs?
-      P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
-      A←V⊃A (((¯1+⍴P)↑A),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓A) ⍝ actual args
-      bs←{⍺⍵}/(⍪P),(⍪A)
-      newEnv←Env.new F.env
-      _←⍺ newEnv∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
-      newEnv eval F.exp
-    }⍵
+    P←2⊃F.params
+    (_ x) y←¯2↑P
+    V←(1+x≡,'&')              ⍝ varargs?
+    P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
+    A←V⊃A (((¯1+⍴P)↑A),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓A) ⍝ actual args
+    bs←{⍺⍵}/(⍪P),(⍪A)
+    newEnv←Env.new F.env
+    _←⍺ newEnv∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
+    newEnv eval F.exp
   }
 
   print←##.Printer.pprint
-
 
   ∇R←env rep input
    :Trap 100

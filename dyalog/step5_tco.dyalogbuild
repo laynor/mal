@@ -1,0 +1,9 @@
+﻿DyalogBuild: 0.1
+ID         : Mal, Version=1.0
+Description: Built Mal workspace
+Defaults   : ⎕IO←⎕ML←1
+TARGET     : Distribution/step5_tco
+
+NS    : step5_tco.dyalog, Target=#
+
+LX    : m.mapl

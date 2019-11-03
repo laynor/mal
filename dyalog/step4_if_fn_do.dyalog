@@ -79,7 +79,12 @@
     _←('<'  defRelOp {∧/ 2</⍵}) e
     _←('<=' defRelOp {∧/ 2≤/⍵}) e
     _←('>=' defRelOp {∧/ 2≥/⍵}) e
-    _←('='  defnp {T.bool 1=≢∪⍵}) e
+    _←('='  defnp {#.T.bool ∧/ 2 #.m.eq/⍵}) e
+    _←('not' defnp {
+      ⍵≡#.T.nil: #.T.true
+      ⍵≡#.T.false: #.T.true
+      #.T.false
+    }) e
     _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list' defnp {#.m.lst.list ⍵}) e
     _←('list?' defnp {
@@ -97,7 +102,7 @@
     })e
     _←('prn' defnp {
       ⎕←#.m.print ⊃⍵
-      ⊃⍵
+      #.T.nil
     })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
     _←('nil' Env.def nil) e

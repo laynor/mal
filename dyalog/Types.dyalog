@@ -2,7 +2,7 @@
    Special Symbol Number String List Vec Map Function Bool Error←⍳10
    true←Bool 1
    false←Bool 0
-   nil←Symbol (⊂'nil')
+   nil←Symbol 'nil'
 
    bool←{
      ⍵: true

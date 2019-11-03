@@ -21,9 +21,6 @@
 
   read←##.Reader.read
 
-  mkPureFn←{(⍺⍺ ⍵)}           ⍝ call ⍺⍺ on ⍵, return ⍺ as env
-
-
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
     N←#.T.Number
@@ -39,9 +36,8 @@
   }
 
   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
-  defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
-  defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
-  defRelOp←{(⍺⍺ defnp (⍵⍵ mkRelFn)) ⍵}
+  defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
+  defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
   nil←(read 'nil')
 
@@ -83,21 +79,21 @@
     _←('<'       defRelOp {∧/ 2</⍵}) e
     _←('<='      defRelOp {∧/ 2≤/⍵}) e
     _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defnp    {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'    defnp    {#.m.lst.list ⍵}) e
-    _←('list'    defnp    {#.m.lst.list ⍵}) e
-    _←('list?'   defnp    {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'  defnp    {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'     defnp    {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'  defnp    {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defnp    {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defnp    {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('count'   defnp    {
+    _←('='       defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
+    _←('list'    defn     {#.m.lst.list ⍵}) e
+    _←('list'    defn     {#.m.lst.list ⍵}) e
+    _←('list?'   defn     {T.bool #.T.List=⊃⊃⍵}) e
+    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
+    _←('str'     defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
+    _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('count'   defn     {
       ty v←⊃⍵
       #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
                            #.T.Number (≢v)
     })e
-    _←('envs' defnp {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs' defn  {⎕←#.Env.ENV ⋄ #.T.nil}) e
     GLOBAL
   }
 

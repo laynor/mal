@@ -198,7 +198,7 @@
     ⍝ FnStar function call
     P←2⊃F.params
     (_ x) y←¯2↑P
-    V←(1+x≡,'&')                    ⍝ varargs?
+    V←1+x≡,'&'                      ⍝ varargs?
     L←lst.list (⊂T.Symbol 'list')∘, ⍝ enclose args in (list ...)
     P←V⊃P ((¯2↓P),⊂y)               ⍝ param names
     A←V⊃A (((¯1+⍴P)↑A),⊂L(¯1+⍴P)↓A) ⍝ actual args

@@ -88,24 +88,26 @@
     }) e
     _←('empty?' defnp {
       ty v←⊃⍵
-      T.bool (ty=#.T.List)∧(0=≢v)
+      T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)
     }) e
     _←('count' defnp {
       ty v←⊃⍵
       (⊃⍵)≡#.T.Symbol 'nil': #.T.Number 0
       #.T.Number (≢v)
     })e
-    _←('prn' defnp {
-      ⎕←#.m.print ⊃⍵
-      #.T.nil
-    })e
     _←('str' defnp {
-      0=≢⍵: #.T.String ''
       #.T.String (⊃,/#.Printer.print¨⍵)
     })e
     _←('pr-str' defnp {
-      0=≢⍵: #.T.String ''
       #.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)
+    })e
+    _←('prn' defnp {
+      ⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)
+      #.T.nil
+    })e
+    _←('println' defnp {
+      ⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵)
+      #.T.nil
     })e
     _←('envs' defnp {⎕←#.Env.ENV⋄#.T.nil}) e
     _←('nil' Env.def nil) e

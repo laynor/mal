@@ -51,7 +51,7 @@
     list←{⊃cons/⍵,⊂empty}
     last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
     butlast←{0=≢2⊃⍵: nil ⋄ list ¯1↓2⊃⍵}
-    append←{(⊃⊃⍵),(,/2∘⊃¨⍵)}
+    concat←{(⊃⊃⍵),(,/2∘⊃¨⍵)}
   :EndNamespace
 
   pairwiseAll←{
@@ -74,7 +74,6 @@
 
   initBaseEnv←{
     e←GLOBAL
-    ⎕←#.Printer.print_readably (T.List ({T.String ⍵}¨⊃⍵))
     _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
     _←('envs'        defn     {⎕←#.Env.ENV ⋄ #.T.nil}) e
     _←('nil'         Env.def  nil) e
@@ -93,14 +92,14 @@
     _←('last'        defn     {#.m.lst.last⊃⍵}) e
     _←('butlast'     defn     {#.m.lst.butlast⊃⍵}) e
     _←('cons'        defn     {(⊃⍵)#.m.lst.cons 2⊃⍵}) e
-    _←('append'      defn     {#.m.lst.append ⍵}) e
+    _←('concat'      defn     {#.m.lst.concat ⍵}) e
     _←('list'        defn     {#.m.lst.list⍵}) e
     _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
     _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
     _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
     _←('pr-str'      defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'         defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('prn'         defn     {⍞←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
+    _←('println'     defn     {⍞←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
     _←('slurp'       defn     {T.String (⊃⎕nget 2⊃⊃⍵)}) e
     _←('read-string' defn     {#.m.read 2⊃⊃⍵}) e
     _←('eval'        defn     {#.m.GLOBAL#.m.eval⊃⍵}) e
@@ -247,8 +246,7 @@
   ∇R←env rep input
    :Trap 100
      v←env eval read input
-     print v
-     R←v
+     R←print v
    :Case 100
      ⎕←⎕dmx.EM
      R←(T.Symbol ,⊂'nil') env
@@ -281,7 +279,7 @@
          R←¯1
        :Else
          res←GLOBAL rep inp
-         ⍞←C.LF
+         ⍞←res,C.LF
          R←recur+1
        :EndSelect
      :EndIf
@@ -292,29 +290,29 @@
 
   getArgv←{
     argvFile←⎕sh 'echo $ARGV'
-    ⎕←argvFile
     0=≢⊃argvFile: ⍬
     S _ _←⎕nget ⊃argvFile
-    argv←{(0<≢¨⍵)/⍵} ({(⍵≠⎕ucs 10)/⍵}¨(S=⎕ucs 10)⊂S)
 
-    0=≢argv: argv ⍬
-
-    fname←⊃argv
-
-    fname (1↓argv)
+    (S≠C.LF)⊆S
   }
 
+
+
   ∇mapl
-   ⎕←'MA(P)L 0.1  =^.^='
-   fname ARGV←getArgv⍬
-   _←initBaseEnv⊂ARGV
-   'ARGV:' ARGV
+   Banner ←'⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵',C.LF
+   Banner,←'⍵  MA(P)L  =^⍵^=  ⍵',C.LF
+   Banner,←'⍵  Version  0.2   ⍵',C.LF
+   Banner,←'⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵',C.LF
+   ARGV←getArgv⍬
+   _←initBaseEnv⊂1↓ARGV
    init⍬
-   :If 0<≢fname
+   :If 0<≢ARGV
      r←¯1
-     code←'(load-file "',fname,'"))'
+     code←'(load-file "',(⊃ARGV),'"))'
      _←GLOBAL rep code
    :Else
+     ⍝ Banner suppressed for testing reasons
+     ⍝ ⍞←Banner
      r←repIO⍣≡1
      'Bye.'
    :EndIf

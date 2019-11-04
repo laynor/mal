@@ -1,5 +1,6 @@
 #!/bin/bash
-echo running dyalog mal in dir $PWD, args: $@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+echo "running dyalog mal (${STEP}) in dir ${PWD}, args: ${@}"
 export WSPATH=$PWD
 CLIARGS=$PWD/cliargs
 rm -f $CLIARGS
@@ -7,8 +8,10 @@ touch $CLIARGS
 for word in "$@"; do
     echo $word >> $CLIARGS
 done
+WS="${DIR}/Distribution/${STEP:-stepA_mal}.dws"
 if [ $TERM = "dumb" ]; then
-    ARGV=$CLIARGS mapl -b -s Distribution/${STEP:-stepA_mal} $1 2>&1
+
+    ARGV=$CLIARGS mapl -b -s $WS 2>&1
 else
-    ARGV=$CLIARGS rlwrap -a mapl -b -s Distribution/${STEP:-stepA_mal} $1 2>&1
+	ARGV=$CLIARGS rlwrap -a mapl -b -s $WS 2>&1
 fi

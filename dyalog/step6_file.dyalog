@@ -8,12 +8,13 @@
   T←#.T
   Env←#.Env
   C←#.C
+  ARGV←⍬
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
 
     ty←{
-      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
+      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', (⍕⍵), ':', (T.typeName ⊃⍵))
       #.m.throw msg
     }
   :EndNamespace
@@ -26,13 +27,13 @@
     N←#.T.Number
     nonNumber←(N=⊃¨⍵)⍳0
     nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-                  N #.m.E.ty (⊃nonNumber⊃⍵)
+                  N #.m.E.ty (nonNumber⊃⍵)
   }
 
   mkRelFn←{
     nonNumber←(#.T.Number=⊃¨⍵)⍳0
     nonNumber>⍴⍵: #.T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
+    #.T.Number #.m.E.ty (nonNumber⊃⍵)
   }
 
   defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
@@ -71,10 +72,13 @@
                              ⍺≡⍵
   }
 
-  mkBaseEnv←{
+  initBaseEnv←{
     e←GLOBAL
+    ⎕←#.Printer.print_readably (T.List ({T.String ⍵}¨⊃⍵))
+    _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
     _←('envs'        defn     {⎕←#.Env.ENV ⋄ #.T.nil}) e
     _←('nil'         Env.def  nil) e
+    _←('apply'       Env.def  T.Builtin 'apply') e
     _←('+'           defOp    (+/)) e
     _←('-'           defOp    (⊃1∘↑-(+/1∘↓))) e
     _←('*'           defOp    (×/))           e
@@ -107,8 +111,6 @@
     _←('count'       defn     {(2-T.Symbol 'nil'≡⊃⍵)⊃(T.Number 0) (T.Number,≢2⊃⊃⍵)})e
     GLOBAL
   }
-
-  BaseEnv←mkBaseEnv⍬
 
   evFn←{
     F←lst.car ⍵
@@ -196,35 +198,47 @@
       ⍺eval else
     }⍵
 
-    T.Symbol 'apply!'≡lst.car⍵: ⍺{
-      ⍝ args←lst.cdr⍵
-      ⍝ f←lst.car args
-      ⍝ fargs←lst.cdr args
-      ⍝ lastArg←lst.last fargs
-      ⍝ otherArgs←lst.butlast fargs
-      ⍝ form←lst.append
+    FS←lst.car ⍵
+    (ty F)←⍺ eval FS
+    A←⍺∘eval¨2⊃lst.cdr ⍵
+
+    prepareEnv←{
+      F←⍺
+      A←⍵
+
+      P←2⊃F.params
+      (_ x) y←¯2↑P
+      V←1+x≡,'&'                      ⍝ varargs?
+      L←lst.list (⊂T.Symbol 'list')∘, ⍝ enclose args in (list ...)
+      P←V⊃P ((¯2↓P),⊂y)               ⍝ param names
+      A←V⊃A (((¯1+⍴P)↑A),⊂T.List ((¯1+⍴P)↓A)) ⍝ actual args
+      bs←{⍺⍵}/(⍪P),(⍪A)               ⍝ list of pairs
+      newEnv←Env.new F.env
+      _←{((2⊃⊃⍵) Env.def (2⊃⍵)) newEnv}¨SE bs
+      newEnv
+    }
+
+    F≡'apply': ⍺{
+      ty F←⊃A
+      A←1↓A
+      A←(¯1↓A),2⊃⊃¯1↑A            ⍝ concatenate to last argument
+
+      ~ty∊T.Function T.Builtin: throw 'Type Error: Expected function.'
+      ty=T.Builtin: ⍺ F.call A
+
+      ty≠T.Function: (T.Error 'Type error') ⍺
+
+      newEnv←F prepareEnv A
+      newEnv eval F.exp
     }⍵
 
-    FS←lst.car ⍵
-    A←2⊃lst.cdr ⍵
-    (ty F)←⍺ eval FS
-
     ⍝ Builtin function call
-    ty=T.Builtin: ⍺ F.call ⍺∘eval¨A
+    ty=T.Builtin: ⍺ F.call A
 
     ⍝ Type error when non callable
     ty≠T.Function: (T.Error 'Type error') ⍺
 
-    ⍝ FnStar function call
-    P←2⊃F.params
-    (_ x) y←¯2↑P
-    V←1+x≡,'&'                      ⍝ varargs?
-    L←lst.list (⊂T.Symbol 'list')∘, ⍝ enclose args in (list ...)
-    P←V⊃P ((¯2↓P),⊂y)               ⍝ param names
-    A←V⊃A (((¯1+⍴P)↑A),⊂L(¯1+⍴P)↓A) ⍝ actual args
-    bs←{⍺⍵}/(⍪P),(⍪A)               ⍝ list of pairs
-    newEnv←Env.new F.env
-    _←⍺ newEnv∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
+    newEnv←F prepareEnv A
     newEnv eval F.exp
   }
 
@@ -244,7 +258,7 @@
   init←{
     not ←'(def! not (fn* [o] (if o false true)))'
     loadFile←'(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))'
-    swap←'(def! swap! (fn* (a f) (reset! a (f (deref a)))))'
+    swap←'(def! swap! (fn* (a f & args) (reset! a (apply f (deref a) args))))'
     _←GLOBAL eval (read not)
     _←GLOBAL eval (read loadFile)
     _←GLOBAL eval (read swap)
@@ -276,8 +290,19 @@
    :EndTrap
   ∇
 
+  getArgv←{
+    argvFile←⎕sh 'echo $ARGV'
+    ⎕←argvFile
+    0=≢⊃argvFile: ⍬
+    S _ _←⎕nget ⊃argvFile
+    {(0<≢¨⍵)/⍵}({(⍵≠⎕ucs 10)/⍵}¨(S=⎕ucs 10)⊂S)
+  }
+
   ∇mapl
    ⎕←'MA(P)L 0.1'
+   ARGV←getArgv⍬
+   _←initBaseEnv⊂ARGV
+   'ARGV:' ARGV
    init⍬
    r←repIO⍣≡1
    'Bye'

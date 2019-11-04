@@ -10,23 +10,17 @@
      #.T.ATOMS,←⊂⍵
      #.T.Atom (≢#.T.ATOMS)
    }
-
-   deref←{
-     (2⊃⍵)⊃ATOMS
-   }
-
+   deref←{(2⊃⍵)⊃ATOMS}
    set←{
      ATOMS[2⊃⍺]←⊂⍵
      ⍵
    }
-
-   bool←{
-     ⍵: true
-     false
-   }
+   bool←{(1+⍵)⊃false true}
 
    mkFn←{
+     ⍺←0
      ns←⎕NS''
+     ns.tag←⍺
      ns.call←⍺⍺
      ns.data←⍵
      Builtin ns

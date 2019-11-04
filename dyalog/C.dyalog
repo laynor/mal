@@ -5,7 +5,7 @@
    LF←⎕ucs 10
    CR←⎕ucs 13
    NL←CR LF
-   SPACE←⎕ucs 32
-   WS←TAB SPACE
+   SPC←⎕ucs 32
+   WS←TAB SPC
    WSNL←WS,NL
  :EndNamespace

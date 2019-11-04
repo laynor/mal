@@ -48,6 +48,9 @@
     car←{⊃2⊃⍵}
     cdr←{L (1↓2⊃⍵)}
     list←{⊃cons/⍵,⊂empty}
+    last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
+    butlast←{0=≢2⊃⍵: nil ⋄ list ¯1↓2⊃⍵}
+    append←{(⊃⊃⍵),(,/2∘⊃¨⍵)}
   :EndNamespace
 
   pairwiseAll←{
@@ -81,8 +84,13 @@
     _←('<='          defRelOp {∧/ 2≤/⍵}) e
     _←('>='          defRelOp {∧/ 2≥/⍵}) e
     _←('='           defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'        defn     {#.m.lst.list ⍵}) e
-    _←('list'        defn     {#.m.lst.list ⍵}) e
+    _←('car'         defn     {#.m.lst.car⊃⍵}) e
+    _←('cdr'         defn     {#.m.lst.cdr⊃⍵}) e
+    _←('last'        defn     {#.m.lst.last⊃⍵}) e
+    _←('butlast'     defn     {#.m.lst.butlast⊃⍵}) e
+    _←('cons'        defn     {(⊃⍵)#.m.lst.cons 2⊃⍵}) e
+    _←('append'      defn     {#.m.lst.append ⍵}) e
+    _←('list'        defn     {#.m.lst.list⍵}) e
     _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
     _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
     _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
@@ -186,6 +194,15 @@
       c←⍺eval cond
       ~(⊂c)∊nil T.false: ⍺eval then
       ⍺eval else
+    }⍵
+
+    T.Symbol 'apply!'≡lst.car⍵: ⍺{
+      ⍝ args←lst.cdr⍵
+      ⍝ f←lst.car args
+      ⍝ fargs←lst.cdr args
+      ⍝ lastArg←lst.last fargs
+      ⍝ otherArgs←lst.butlast fargs
+      ⍝ form←lst.append
     }⍵
 
     FS←lst.car ⍵

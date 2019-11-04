@@ -295,17 +295,29 @@
     ⎕←argvFile
     0=≢⊃argvFile: ⍬
     S _ _←⎕nget ⊃argvFile
-    {(0<≢¨⍵)/⍵}({(⍵≠⎕ucs 10)/⍵}¨(S=⎕ucs 10)⊂S)
+    argv←{(0<≢¨⍵)/⍵} ({(⍵≠⎕ucs 10)/⍵}¨(S=⎕ucs 10)⊂S)
+
+    0=≢argv: argv ⍬
+
+    fname←⊃argv
+
+    fname (1↓argv)
   }
 
   ∇mapl
-   ⎕←'MA(P)L 0.1'
-   ARGV←getArgv⍬
+   ⎕←'MA(P)L 0.1  =^.^='
+   fname ARGV←getArgv⍬
    _←initBaseEnv⊂ARGV
    'ARGV:' ARGV
    init⍬
-   r←repIO⍣≡1
-   'Bye'
+   :If 0<≢fname
+     r←¯1
+     code←'(load-file "',fname,'"))'
+     _←GLOBAL rep code
+   :Else
+     r←repIO⍣≡1
+     'Bye.'
+   :EndIf
    :If r<0
      ⎕off
    :EndIf

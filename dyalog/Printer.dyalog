@@ -23,6 +23,7 @@
     t≡T.Map:    '{',(trim⍕print_readably¨ v),'}'
     t≡T.Builtin: '#<Builtin ',(⍕v),'>'
     t≡T.Function: '#<Funciton ',(⍕v),'>'
+    t≡T.Atom: '(atom ',(print_readably T.deref ⍵),')'
     ⍵≡T.true: 'true'
     ⍵≡T.false: 'false'
     t≡T.Error:  'ERROR: ', v

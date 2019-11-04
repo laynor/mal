@@ -14,7 +14,7 @@
 
     ty←{
       msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
-      #.T.Error msg
+      #.m.throw msg
     }
   :EndNamespace
 
@@ -70,32 +70,33 @@
 
   mkBaseEnv←{
     e←GLOBAL
-    _←('nil'     Env.def  nil) e
-    _←('+'       defOp    (+/)) e
-    _←('-'       defOp    (⊃1∘↑-(+/1∘↓))) e
-    _←('*'       defOp    (×/))           e
-    _←('/'       defOp    (⊃1∘↑÷(×/1∘↓))) e
-    _←('>'       defRelOp {∧/ 2>/⍵}) e
-    _←('<'       defRelOp {∧/ 2</⍵}) e
-    _←('<='      defRelOp {∧/ 2≤/⍵}) e
-    _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list?'   defn     {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'     defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('read-string' defn {#.m.read 2⊃⊃⍵}) e
-    _←('eval'    defn     {⍺#.m.eval⊃⍵}) e
-    _←('count'   defn     {
-      ty v←⊃⍵
-      #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
-                           #.T.Number (≢v)
-    })e
-    _←('envs' defn  {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs'        defn     {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('nil'         Env.def  nil) e
+    _←('+'           defOp    (+/)) e
+    _←('-'           defOp    (⊃1∘↑-(+/1∘↓))) e
+    _←('*'           defOp    (×/))           e
+    _←('/'           defOp    (⊃1∘↑÷(×/1∘↓))) e
+    _←('>'           defRelOp {∧/ 2>/⍵}) e
+    _←('<'           defRelOp {∧/ 2</⍵}) e
+    _←('<='          defRelOp {∧/ 2≤/⍵}) e
+    _←('>='          defRelOp {∧/ 2≥/⍵}) e
+    _←('='           defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
+    _←('list'        defn     {#.m.lst.list ⍵}) e
+    _←('list'        defn     {#.m.lst.list ⍵}) e
+    _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
+    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
+    _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
+    _←('pr-str'      defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'         defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('println'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('slurp'       defn     {T.String (⊃⎕nget 2⊃⊃⍵)}) e
+    _←('read-string' defn     {#.m.read 2⊃⊃⍵}) e
+    _←('eval'        defn     {#.m.GLOBAL#.m.eval⊃⍵}) e
+    _←('atom'        defn     (T.newAtom⊃)) e
+    _←('atom?'       defn     {T.bool T.Atom≡⊃⊃⍵})e
+    _←('deref'       defn     {T.deref⊃⍵}) e
+    _←('reset!'      defn     {(⊃⍵) T.set (2⊃⍵)}) e
+    _←('count'       defn     {(2-T.Symbol 'nil'≡⊃⍵)⊃(T.Number 0) (T.Number,≢2⊃⊃⍵)})e
     GLOBAL
   }
 
@@ -225,7 +226,11 @@
 
   init←{
     not ←'(def! not (fn* [o] (if o false true)))'
+    loadFile←'(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))'
+    swap←'(def! swap! (fn* (a f) (reset! a (f (deref a)))))'
     _←GLOBAL eval (read not)
+    _←GLOBAL eval (read loadFile)
+    _←GLOBAL eval (read swap)
     ⍬
   }
 

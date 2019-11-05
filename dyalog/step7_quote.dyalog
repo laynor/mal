@@ -51,7 +51,7 @@
     list←{⊃cons/⍵,⊂empty}
     last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
     butlast←{0=≢2⊃⍵: nil ⋄ list ¯1↓2⊃⍵}
-    append←{(⊃⊃⍵),(,/2∘⊃¨⍵)}
+    concat←{L,,/2∘⊃¨⍵}
   :EndNamespace
 
   pairwiseAll←{
@@ -92,7 +92,7 @@
     _←('last'        defn     {#.m.lst.last⊃⍵}) e
     _←('butlast'     defn     {#.m.lst.butlast⊃⍵}) e
     _←('cons'        defn     {(⊃⍵)#.m.lst.cons 2⊃⍵}) e
-    _←('append'      defn     {#.m.lst.append ⍵}) e
+    _←('concat'      defn     {#.m.lst.concat ⍵}) e
     _←('list'        defn     {#.m.lst.list⍵}) e
     _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
     _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
@@ -197,6 +197,21 @@
       ⍺eval else
     }⍵
 
+    T.Symbol 'quote'≡lst.car⍵: ⍺{
+      2⊃2⊃⍵
+    }⍵
+
+    T.Symbol 'quasiquote'≡lst.car⍵: ⍺{
+      isCons←{(T.List=⊃⍵)∧2<≢2⊃⍵}
+      qq←{
+        ~isCons ⍵: T.List (T.Symbol 'quote') ⍵
+        T.Symbol 'unquote'≡⊃2⊃⍵: 2⊃2⊃⍵
+        ⍝ TODO  isCons ... check if first element is list (splice-unquote)
+        T.nil
+      }
+
+    }⍵
+
     FS←lst.car ⍵
     (ty F)←⍺ eval FS
     A←⍺∘eval¨2⊃lst.cdr ⍵
@@ -293,10 +308,7 @@
     0=≢⊃argvFile: ⍬
     S _ _←⎕nget ⊃argvFile
 
-    argv←(S≠C.LF)⊆S
-    0=≢argv: argv ⍬
-
-    (⊃argv) (1↓argv)              ⍝ filename and argv
+    (S≠C.LF)⊆S
   }
 
 
@@ -306,12 +318,12 @@
    Banner,←'⍵  MA(P)L  =^⍵^=  ⍵',C.LF
    Banner,←'⍵  Version  0.2   ⍵',C.LF
    Banner,←'⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵',C.LF
-   fname ARGV←getArgv⍬
-   _←initBaseEnv⊂ARGV
+   ARGV←getArgv⍬
+   _←initBaseEnv⊂1↓ARGV
    init⍬
-   :If 0<≢fname
+   :If 0<≢ARGV
      r←¯1
-     code←'(load-file "',fname,'"))'
+     code←'(load-file "',(⊃ARGV),'"))'
      _←GLOBAL rep code
    :Else
      ⍝ Banner suppressed for testing reasons

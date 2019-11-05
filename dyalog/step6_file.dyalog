@@ -312,7 +312,7 @@
      _←GLOBAL rep code
    :Else
      ⍝ Banner suppressed for testing reasons
-     ⍝ ⍞←Banner
+     ⍞←Banner
      r←repIO⍣≡1
      'Bye.'
    :EndIf

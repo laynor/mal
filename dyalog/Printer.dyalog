@@ -22,7 +22,7 @@
     t≡T.Vec:    '[',(trim⍕print_readably¨ v),']'
     t≡T.Map:    '{',(trim⍕print_readably¨ v),'}'
     t≡T.Builtin: '#<Builtin ',(⍕v),'>'
-    t≡T.Function: '#<Funciton ',(⍕v),'>'
+    t≡T.Function: '#<', ('Funciton' 'Macro'⊃⍨1+v.isMacro),' ',(⍕v),'>'
     t≡T.Atom: '(atom ',(print_readably T.deref ⍵),')'
     ⍵≡T.true: 'true'
     ⍵≡T.false: 'false'

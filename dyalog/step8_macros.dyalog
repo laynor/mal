@@ -52,6 +52,7 @@
     last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
     butlast←{0=≢2⊃⍵: nil ⋄ list ¯1↓2⊃⍵}
     concat←{L,,/2∘⊃¨⍵}
+    nth←{⍺⊃2⊃⍵}
   :EndNamespace
 
   pairwiseAll←{
@@ -151,6 +152,7 @@
     F.params←params
     F.env←env
     F.exp←exp
+    F.isMacro←0
 
     T.Function F
   }
@@ -172,7 +174,15 @@
 
     0=≢2⊃⍵: ⍵
 
-    T.Symbol 'def!'≡lst.car⍵: ⍺(eval evDef)2⊃lst.cdr⍵
+    T.Symbol 'def!'≡lst.car⍵:      ⍺(eval evDef)2⊃lst.cdr⍵
+    T.Symbol 'defmacro!'≡lst.car⍵: ⍺{
+      name form←2⊃lst.cdr⍵
+      t v←val←⍺ eval form
+      t≢T.Function: throw 'Type error, function expected'.
+      v.isMacro←1
+      _←(((2⊃name) Env.def val) ⍺)
+      val
+    }⍵
 
     T.Symbol 'fn*' ≡lst.car⍵: ⍺(eval evFnStar)2⊃lst.cdr⍵
 

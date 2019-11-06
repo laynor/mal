@@ -1,5 +1,17 @@
  :Namespace T
-   Special Builtin Symbol Number String List Vec Map Function Bool Atom Error←⍳12
+   ⍝ Special Builtin Symbol Number String List Vec Map Function Bool Atom Error←⍳12
+   Special←'⋄'
+   Builtin←'⌺'
+   Symbol←'⍺'
+   Number←'N'
+   String←'S'
+   List←'L'
+   Vec←'V'
+   Map←'M'
+   Function←'∇'
+   Bool←'B'
+   Atom←'A'
+   Error←'E'
    true←Bool 1
    false←Bool 0
    nil←Symbol 'nil'

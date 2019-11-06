@@ -202,14 +202,21 @@
     }⍵
 
     T.Symbol 'quasiquote'≡lst.car⍵: ⍺{
-      isCons←{(T.List=⊃⍵)∧2<≢2⊃⍵}
       qq←{
-        ~isCons ⍵: T.List (T.Symbol 'quote') ⍵
-        T.Symbol 'unquote'≡⊃2⊃⍵: 2⊃2⊃⍵
-        ⍝ TODO  isCons ... check if first element is list (splice-unquote)
-        T.nil
-      }
+        L S V←T.(List Symbol Vec)
+        car←lst.car
+        cdr←lst.cdr
 
+        isCons←{((⊃⍵)∊L V)∧0<≢2⊃⍵}
+
+        ~isCons ⍵:                    L ((S 'quote') ⍵)
+        S 'unquote'≡car⍵:             car cdr⍵
+        ~isCons car⍵:                 L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
+        ~S 'splice-unquote'≡car car⍵: L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
+                                      L ((S 'concat') (car cdr car⍵) (∇cdr⍵))
+      }
+      x←qq lst.car lst.cdr⍵
+      ⍺eval x
     }⍵
 
     FS←lst.car ⍵

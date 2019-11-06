@@ -27,7 +27,7 @@
     ⍵≡T.true: 'true'
     ⍵≡T.false: 'false'
     t≡T.Error:  'ERROR: ', v
-    'error',⍕⍵                    ⍝ do something better than just returning a string 'error'
+    '<',(⍕⍵),'>'                    ⍝ do something better than just returning a string 'error'
   }
 
   print←{

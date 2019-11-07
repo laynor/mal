@@ -40,6 +40,6 @@
   }
 
 
-  pprint←print_readably
+  pprint←print
 
 :EndNamespace

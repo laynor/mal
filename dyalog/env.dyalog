@@ -52,6 +52,7 @@
   get←{
     get1←{⊃⍺[⍺[;1]⍳⊂,⍵;2]}
     i←⍵idx⍺
+    i>≢ENV: T.nil
     (i⊃ENV)get1⍵
   }
 

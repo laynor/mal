@@ -1,6 +1,16 @@
  :Require file://debug.dyalog
  :Require file://Types.dyalog
  :Require file://C.dyalog
+
+⍝ Try another lexing technique:
+⍝ get bool vectors like
+⍝ digits←⍵∊'1234567890'
+⍝ spaces←2×⍵∊C.WSNL
+⍝ special←4×⍵∊C.Special
+⍝ etc.
+
+⍝ Also: try representing parsers as tables.
+
  :Namespace Reader
    T←##.T
    C←##.C

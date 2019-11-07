@@ -12,6 +12,7 @@
    Bool←'B'
    Atom←'A'
    Error←'E'
+
    true←Bool 1
    false←Bool 0
    nil←Symbol 'nil'
@@ -22,11 +23,14 @@
      #.T.ATOMS,←⊂⍵
      #.T.Atom (≢#.T.ATOMS)
    }
+
    deref←{(2⊃⍵)⊃ATOMS}
+
    set←{
      ATOMS[2⊃⍺]←⊂⍵
      ⍵
    }
+
    bool←{(1+⍵)⊃false true}
 
    mkFn←{
@@ -39,19 +43,19 @@
    }
 
    typeName←{
-     ⍵≡Error: 'Error'
+     ⍵≡Error:    'Error'
      ⍵≡Function: 'Function'
-     ⍵≡Builtin: 'Builtin'
-     ⍵≡List: 'List'
-     ⍵≡Map: 'Map'
-     ⍵≡Number: 'Number'
-     ⍵≡Special: 'Invalid'
-     ⍵≡String: 'String'
-     ⍵≡Symbol: 'Symbol'
-     ⍵≡Bool: 'Bool'
-     ⍵≡Vec: 'Vec'
-     ⍵≡Atom: 'Atom'
-     'Unknown'
+     ⍵≡Builtin:  'Builtin'
+     ⍵≡List:     'List'
+     ⍵≡Map:      'Map'
+     ⍵≡Number:   'Number'
+     ⍵≡Special:  'Invalid'
+     ⍵≡String:   'String'
+     ⍵≡Symbol:   'Symbol'
+     ⍵≡Bool:     'Bool'
+     ⍵≡Vec:      'Vec'
+     ⍵≡Atom:     'Atom'
+                 'Unknown'
    }
 
  :EndNamespace

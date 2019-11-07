@@ -4,17 +4,19 @@
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
 :Require file://C.dyalog
+:Require file://core.dyalog
 :Namespace m
   T←#.T
   Env←#.Env
   C←#.C
   ARGV←⍬
+  core←#.core
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
 
     ty←{
-      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', (⍕⍵), ':', (T.typeName ⊃⍵))
+      msg←#.('Type Error: expected ', (⊃{⍺,', ',⍵}/T.typeName¨ ⍺), ', found ', (T.typeName ⊃⍵)),' (', (⍕⍵), ').'
       #.m.throw msg
     }
   :EndNamespace
@@ -41,19 +43,6 @@
   defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
   nil←(read 'nil')
-
-  :Namespace lst
-    L←##.T.List
-    empty←L ⍬
-    cons←{L ((⊂⍺),2⊃⍵)}
-    car←{⊃2⊃⍵}
-    cdr←{L (1↓2⊃⍵)}
-    list←{⊃cons/⍵,⊂empty}
-    last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
-    butlast←{0=≢2⊃⍵: nil ⋄ list ¯1↓2⊃⍵}
-    concat←{L,,/2∘⊃¨⍵}
-    nth←{⍺⊃2⊃⍵}
-  :EndNamespace
 
   pairwiseAll←{
     ∧/2⍺⍺/⍵
@@ -88,13 +77,13 @@
     _←('<='          defRelOp {∧/ 2≤/⍵}) e
     _←('>='          defRelOp {∧/ 2≥/⍵}) e
     _←('='           defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('car'         defn     {#.m.lst.car⊃⍵}) e
-    _←('cdr'         defn     {#.m.lst.cdr⊃⍵}) e
-    _←('last'        defn     {#.m.lst.last⊃⍵}) e
-    _←('butlast'     defn     {#.m.lst.butlast⊃⍵}) e
-    _←('cons'        defn     {(⊃⍵)#.m.lst.cons 2⊃⍵}) e
-    _←('concat'      defn     {#.m.lst.concat ⍵}) e
-    _←('list'        defn     {#.m.lst.list⍵}) e
+    _←('car'         defn     {#.core.car⊃⍵}) e
+    _←('cdr'         defn     {#.core.cdr⊃⍵}) e
+    _←('last'        defn     {#.core.last⊃⍵}) e
+    _←('butlast'     defn     {#.core.butlast⊃⍵}) e
+    _←('cons'        defn     {(⊃⍵)#.core.cons 2⊃⍵}) e
+    _←('concat'      defn     {#.core.concat ⍵}) e
+    _←('list'        defn     {#.core.list⍵}) e
     _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
     _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
     _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
@@ -113,8 +102,8 @@
   }
 
   evFn←{
-    F←lst.car ⍵
-    A←2⊃lst.cdr ⍵
+    F←core.car ⍵
+    A←2⊃core.cdr ⍵
     (ty f)←⍺ ⍺⍺ F
     ~ty∊T.Function T.Builtin: (T.Error 'Type error') ⍺
     ⍺ f.call ⍺∘⍺⍺¨A
@@ -158,6 +147,7 @@
   }
 
   eval←{
+
     ty←⊃⍵
 
     ty≡T.Symbol: ⍺{
@@ -166,17 +156,38 @@
       throw E.nameError 2⊃⍵
     }⍵
 
-    ty≡T.Vec: T.Vec (⍺eval¨2⊃⍵)
+    (~ty∊T.(List Vec Map)): ⍵   ⍝ Other self evaluating stuff
 
-    ty≡T.Map: T.Map (⍺eval¨2⊃⍵)
+    ty≡T.Vec: T.Vec (⍺eval¨2⊃⍵) ⍝ Vectors
 
-    (ty≢T.List): ⍵
+    ty≡T.Map: T.Map (⍺eval¨2⊃⍵) ⍝ Maps
 
+    ⍝ Lists
+
+    isCons←{((⊃⍵)∊L V)∧0<≢2⊃⍵}
+
+    macroexpand←{
+      quote←core.list (T.Symbol quote) ⍵
+      isMC←{
+        T.Symbol≢⊃core.car⍵: 0
+        t v←⍺Env.get 2⊃core.car⍵
+        (t≠T.Function): 0
+        v.isMacro (t v)
+      }
+      me1←{
+        ~isCons⍵: ⍵
+        res fn←isMC⍵
+        ~res: ⍵
+        ast←⍺eval (core.list (core.car⍵) (core.list quote¨(2⊃core.cdr⍵)))
+      }
+      ⍺me1⍵
+    }
+
+    ⎕←⍺macroexpand⍵
     0=≢2⊃⍵: ⍵
-
-    T.Symbol 'def!'≡lst.car⍵:      ⍺(eval evDef)2⊃lst.cdr⍵
-    T.Symbol 'defmacro!'≡lst.car⍵: ⍺{
-      name form←2⊃lst.cdr⍵
+    T.Symbol 'def!'≡core.car⍵:      ⍺(eval evDef)2⊃core.cdr⍵
+    T.Symbol 'defmacro!'≡core.car⍵: ⍺{
+      name form←2⊃core.cdr⍵
       t v←val←⍺ eval form
       t≢T.Function: throw 'Type error, function expected'.
       v.isMacro←1
@@ -184,40 +195,38 @@
       val
     }⍵
 
-    T.Symbol 'fn*' ≡lst.car⍵: ⍺(eval evFnStar)2⊃lst.cdr⍵
+    T.Symbol 'fn*' ≡core.car⍵: ⍺(eval evFnStar)2⊃core.cdr⍵
 
-    T.Symbol 'let*'≡lst.car⍵: ⍺{
+    T.Symbol 'let*'≡core.car⍵: ⍺{
       (_ bs) exp←1↓2⊃⍵                ⍝ TODO check type!
       bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
       env←Env.new⍺
       _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
       env eval exp
     }⍵
-    T.Symbol 'do'≡lst.car⍵: ⍺{
+    T.Symbol 'do'≡core.car⍵: ⍺{
       forms←1↓2⊃⍵
       x←⍺∘eval¨ forms
       0=≢x: T.nil
       ⊃¯1↑x
     }⍵
 
-    T.Symbol 'if'≡lst.car⍵: ⍺{
+    T.Symbol 'if'≡core.car⍵: ⍺{
       cond then else←3↑1↓(2⊃⍵),⊂T.nil
       c←⍺eval cond
       ~(⊂c)∊nil T.false: ⍺eval then
       ⍺eval else
     }⍵
 
-    T.Symbol 'quote'≡lst.car⍵: ⍺{
+    T.Symbol 'quote'≡core.car⍵: ⍺{
       2⊃2⊃⍵
     }⍵
 
-    T.Symbol 'quasiquote'≡lst.car⍵: ⍺{
+    T.Symbol 'quasiquote'≡core.car⍵: ⍺{
       qq←{
         L S V←T.(List Symbol Vec)
-        car←lst.car
-        cdr←lst.cdr
-
-        isCons←{((⊃⍵)∊L V)∧0<≢2⊃⍵}
+        car←core.car
+        cdr←core.cdr
 
         ~isCons ⍵:                    L ((S 'quote') ⍵)
         S 'unquote'≡car⍵:             car cdr⍵
@@ -225,25 +234,24 @@
         ~S 'splice-unquote'≡car car⍵: L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
                                       L ((S 'concat') (car cdr car⍵) (∇cdr⍵))
       }
-      x←qq lst.car lst.cdr⍵
+      x←qq core.car core.cdr⍵
       ⍺eval x
     }⍵
 
-    FS←lst.car ⍵
+    FS←core.car ⍵
     (ty F)←⍺ eval FS
-    A←⍺∘eval¨2⊃lst.cdr ⍵
+    A←⍺∘eval¨2⊃core.cdr ⍵
 
     prepareEnv←{
-      F←⍺
-      A←⍵
+      F A←⍺ ⍵
 
       P←2⊃F.params
       (_ x) y←¯2↑P
-      V←1+x≡,'&'                      ⍝ varargs?
-      L←lst.list (⊂T.Symbol 'list')∘, ⍝ enclose args in (list ...)
-      P←V⊃P ((¯2↓P),⊂y)               ⍝ param names
+      V←1+x≡,'&'                              ⍝ varargs?
+      L←core.list (⊂T.Symbol 'list')∘,        ⍝ enclose args in (list ...)
+      P←V⊃P ((¯2↓P),⊂y)                       ⍝ param names
       A←V⊃A (((¯1+⍴P)↑A),⊂T.List ((¯1+⍴P)↓A)) ⍝ actual args
-      bs←{⍺⍵}/(⍪P),(⍪A)               ⍝ list of pairs
+      bs←{⍺⍵}/(⍪P),(⍪A)                       ⍝ list of pairs
       newEnv←Env.new F.env
       _←{((2⊃⊃⍵) Env.def (2⊃⍵)) newEnv}¨SE bs
       newEnv
@@ -252,10 +260,10 @@
     F≡'apply': ⍺{
       ty F←⊃A
       A←1↓A
-      A←(¯1↓A),2⊃⊃¯1↑A            ⍝ concatenate to last argument
+      A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
 
       ~ty∊T.Function T.Builtin: throw 'Type Error: Expected function.'
-      ty=T.Builtin: ⍺ F.call A
+                                ty=T.Builtin: ⍺ F.call A
 
       ty≠T.Function: (T.Error 'Type error') ⍺
 

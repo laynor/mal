@@ -1,5 +1,5 @@
+:Require file://Chars.dyalog
 :Require file://Types.dyalog
-:Require file://C.dyalog
 :Namespace Printer
   C T←#.(Chars Types)
 

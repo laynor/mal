@@ -1,15 +1,17 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+
+:Require file://Chars.dyalog
+:Require file://Env.dyalog
+:Require file://Errors.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
-:Require file://C.dyalog
+
 :Require file://core.dyalog
-:Require file://Errors.dyalog
 
 :Namespace m
   ⍝ import
-  T Env C core P R E←#.(Types Env Chars core Printer Reader Errors)
+  C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
   ARGV←⍬
 
@@ -19,30 +21,11 @@
   typeError←E.TypeError∘E.throw
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
-  mkNumFn←{
-    N←T.Number
-    NaN←(N=⊃¨⍵)⍳0
-    NaN>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-            typeError N (NaN⊃⍵)
-  }
-
-  mkRelFn←{
-    nonNumber←(T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    typeError T.Number (nonNumber⊃⍵)
-  }
-
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
-  defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
-  defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
-
-  nil←(read 'nil')
-
-  pairwiseAll←{
-    ∧/2⍺⍺/⍵
-  }
 
   GLOBAL←1
+
+  nil←T.nil
 
   eq←{
     eqLst←{
@@ -60,17 +43,17 @@
     e←GLOBAL
     _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
     _←('envs'        defn     {⎕←Env.ENV ⋄ T.nil}) e
-    _←('nil'         Env.def  nil) e
+    _←('nil'         Env.def  core.nil) e
     _←('apply'       Env.def  T.Builtin 'apply') e
     _←('macroexpand' Env.def  T.Builtin 'macroexpand') e
-    _←('+'           defOp    (+/)) e
-    _←('-'           defOp    (⊃1∘↑-(+/1∘↓))) e
-    _←('*'           defOp    (×/))           e
-    _←('/'           defOp    (⊃1∘↑÷(×/1∘↓))) e
-    _←('>'           defRelOp {∧/ 2>/⍵}) e
-    _←('<'           defRelOp {∧/ 2</⍵}) e
-    _←('<='          defRelOp {∧/ 2≤/⍵}) e
-    _←('>='          defRelOp {∧/ 2≥/⍵}) e
+    _←('+'           defn     core.plus) e
+    _←('-'           defn     core.minus) e
+    _←('*'           defn     core.multiply)           e
+    _←('/'           defn     core.divide) e
+    _←('>'           defn     core.gt) e
+    _←('<'           defn     core.lt) e
+    _←('>='          defn     core.gte) e
+    _←('<='          defn     core.lte) e
     _←('='           defn     {T.bool ⊃∧/ 2 eq/⍵}) e
     _←('car'         defn     {core.car⊃⍵}) e
     _←('first'       defn     {core.car⊃⍵}) e

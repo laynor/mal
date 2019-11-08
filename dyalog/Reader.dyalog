@@ -1,6 +1,6 @@
  :Require file://debug.dyalog
- :Require file://Types.dyalog
- :Require file://C.dyalog
+:Require file://Chars.dyalog
+:Require file://Types.dyalog
 
 ⍝ Try another lexing technique:
 ⍝ get bool vectors like

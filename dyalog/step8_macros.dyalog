@@ -27,17 +27,7 @@
 
   nil←T.nil
 
-  eq←{
-    eqLst←{
-      (≢⍺)≠≢⍵: 0
-      ∧/eq/(⍪⍺),⍪⍵
-    }
-    ty1 v1←⍺
-    ty2 v2←⍵
-    ∧/ty1 ty2∊T.List T.Vec: (0,v1) eqLst (0,v2)
-    ∧/ty1 ty2=T.Map:         v1 eqLst v2
-                             ⍺≡⍵
-  }
+  eq←T.eq
 
   initBaseEnv←{
     e←GLOBAL

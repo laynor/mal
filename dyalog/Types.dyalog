@@ -17,6 +17,18 @@
    false←Bool 0
    nil←Symbol 'nil'
 
+   eq←{
+     eqLst←{
+       (≢⍺)≠≢⍵: 0
+       ∧/eq/(⍪⍺),⍪⍵
+     }
+     ty1 v1←⍺
+     ty2 v2←⍵
+     ∧/ty1 ty2∊List Vec: (0,v1) eqLst (0,v2)
+     ∧/ty1 ty2=Map:       v1 eqLst v2
+                          ⍺≡⍵
+   }
+
    ATOMS←⍬
 
    newAtom←{

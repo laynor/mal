@@ -1,15 +1,16 @@
 :Require file://Types.dyalog
 :Namespace core
-  list←#.T.List,⊂
-  vec←#.T.Vec,⊂
+  T←#.Types
+  list←T.List,⊂
+  vec←T.Vec,⊂
   empty←list ⍬
   cons←{list ((⊂⍺),2⊃⍵)}
   car←{
-    ⍵≡#.T.nil: #.T.nil
-    ⊃(2⊃⍵),⊂#.T.nil
+    ⍵≡T.nil: T.nil
+    ⊃(2⊃⍵),⊂T.nil
   }
   cdr←{
-    #.T.nil≡⍵: empty
+    T.nil≡⍵: empty
     list (⍬,1↓2⊃⍵)
   }
   last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}

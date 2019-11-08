@@ -1,6 +1,6 @@
 :Require file://Types.dyalog
 :Namespace Env
-  T←##.T
+  T←#.Types
 
   ⍝ ∇R←(name defn fn) env
   ⍝  key←,name

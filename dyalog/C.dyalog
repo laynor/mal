@@ -1,4 +1,4 @@
- :Namespace C
+ :Namespace Chars
    AL←⎕ucs 07
    BS←⎕ucs 08
    TAB←⎕ucs 9

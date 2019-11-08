@@ -1,8 +1,8 @@
 :Require file://Types.dyalog
 :Require file://C.dyalog
 :Namespace Printer
-  C←##.C
-  T←##.T
+  C T←#.(Chars Types)
+
   trim←{a←⍵=' ' ⋄ b←~(¯1↓(a,0)∧(1,a))∨(⌽∧\⌽a) ⋄ b/⍵}
   unescape←{
     unescape1←{

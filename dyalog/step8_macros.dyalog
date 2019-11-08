@@ -5,42 +5,32 @@
 :Require file://Printer.dyalog
 :Require file://C.dyalog
 :Require file://core.dyalog
+:Require file://Errors.dyalog
 
 :Namespace m
   ⍝ import
-  T Env C core P R←#.(T Env C core Printer Reader)
+  T Env C core P R E←#.(Types Env Chars core Printer Reader Errors)
 
   ARGV←⍬
 
-  :Namespace E
-    nameError←{'Name error: ''',⍵,''' not found.'}
-
-    indexError←{'Index error, ', #.Printer.print ⍵}
-
-    ty←{
-      msg←#.('Type Error: expected ', (⊃{⍺,', ',⍵}/T.typeName¨ ⍺), ', found ', (T.typeName ⊃⍵)),'.'
-      #.m.throw msg
-    }
-  :EndNamespace
-
-
-  read←##.Reader.read
+  read←R.read
+  print←P.print_readably
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    N←#.T.Number
-    nonNumber←(N=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-                  N #.m.E.ty (nonNumber⊃⍵)
+    N←T.Number
+    NaN←(N=⊃¨⍵)⍳0
+    NaN>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
+            N E.ty (NaN⊃⍵)
   }
 
   mkRelFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Number #.m.E.ty (nonNumber⊃⍵)
+    nonNumber←(T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
+    T.Number E.ty (nonNumber⊃⍵)
   }
 
-  defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
+  defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
   defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
   defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
@@ -55,7 +45,7 @@
   eq←{
     eqLst←{
       (≢⍺)≠≢⍵: 0
-      ∧/#.m.eq/(⍪⍺),⍪⍵
+      ∧/eq/(⍪⍺),⍪⍵
     }
     ty1 v1←⍺
     ty2 v2←⍵
@@ -67,7 +57,7 @@
   initBaseEnv←{
     e←GLOBAL
     _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
-    _←('envs'        defn     {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs'        defn     {⎕←Env.ENV ⋄ T.nil}) e
     _←('nil'         Env.def  nil) e
     _←('apply'       Env.def  T.Builtin 'apply') e
     _←('macroexpand' Env.def  T.Builtin 'macroexpand') e
@@ -79,30 +69,30 @@
     _←('<'           defRelOp {∧/ 2</⍵}) e
     _←('<='          defRelOp {∧/ 2≤/⍵}) e
     _←('>='          defRelOp {∧/ 2≥/⍵}) e
-    _←('='           defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('car'         defn     {#.core.car⊃⍵}) e
-    _←('first'       defn     {#.core.car⊃⍵}) e
-    _←('cdr'         defn     {#.core.cdr⊃⍵}) e
-    _←('rest'        defn     {#.core.cdr⊃⍵}) e
+    _←('='           defn     {T.bool ⊃∧/ 2 eq/⍵}) e
+    _←('car'         defn     {core.car⊃⍵}) e
+    _←('first'       defn     {core.car⊃⍵}) e
+    _←('cdr'         defn     {core.cdr⊃⍵}) e
+    _←('rest'        defn     {core.cdr⊃⍵}) e
     _←('nth'         defn     {
       i←1+2⊃2⊃⍵
-      i>≢2⊃⍵: #.m.throw 'Index error'
-      ⊃i #.core.nth(#.core.concat (⊃⍵) (#.T.List (i⍴⊂#.T.nil)))
+      i>≢2⊃⍵: E.IndexError E.throw i
+      ⊃i core.nth(core.concat (⊃⍵) (T.List (i⍴⊂T.nil)))
     }) e
-    _←('last'        defn     {#.core.last⊃⍵}) e
-    _←('butlast'     defn     {#.core.butlast⊃⍵}) e
-    _←('cons'        defn     {(⊃⍵)#.core.cons 2⊃⍵}) e
-    _←('concat'      defn     {#.core.concat ⍵}) e
-    _←('list'        defn     {#.core.list⍵}) e
-    _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'      defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨#.m.SE ⍵)})e
-    _←('prn'         defn     {⍞←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
-    _←('println'     defn     {⍞←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
+    _←('last'        defn     {core.last⊃⍵}) e
+    _←('butlast'     defn     {core.butlast⊃⍵}) e
+    _←('cons'        defn     {(⊃⍵)core.cons 2⊃⍵}) e
+    _←('concat'      defn     {core.concat ⍵}) e
+    _←('list'        defn     {core.list⍵}) e
+    _←('list?'       defn     {T.bool T.List=⊃⊃⍵}) e
+    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊T.List T.Vec)∧(0=≢v)}) e
+    _←('str'         defn     {T.String (⊃,/P.print¨⍵)})e
+    _←('pr-str'      defn     {T.String (¯1↓⊃,/{(P.print_readably⍵),' '}¨SE ⍵)})e
+    _←('prn'         defn     {⍞←(¯1↓⊃,/{(P.print_readably⍵),' '}¨⍵),C.LF ⋄ T.nil})e
+    _←('println'     defn     {⍞←(¯1↓⊃,/{(P.print⍵),' '}¨⍵),C.LF ⋄ T.nil})e
     _←('slurp'       defn     {T.String (⊃⎕nget 2⊃⊃⍵)}) e
-    _←('read-string' defn     {#.m.read 2⊃⊃⍵}) e
-    _←('eval'        defn     {#.m.GLOBAL#.m.eval⊃⍵}) e
+    _←('read-string' defn     {read 2⊃⊃⍵}) e
+    _←('eval'        defn     {GLOBAL eval⊃⍵}) e
     _←('atom'        defn     (T.newAtom⊃)) e
     _←('atom?'       defn     {T.bool T.Atom≡⊃⊃⍵})e
     _←('deref'       defn     {T.deref⊃⍵}) e
@@ -115,7 +105,7 @@
     F←core.car ⍵
     A←2⊃core.cdr ⍵
     (ty f)←⍺ ⍺⍺ F
-    ~ty∊T.Function T.Builtin: T.Function T.Builtin #.m.E.ty F
+    ~ty∊T.Function T.Builtin: T.Function T.Builtin E.ty F
     ⍺ f.call ⍺∘⍺⍺¨A
   }
 
@@ -126,9 +116,6 @@
     ((2⊃name) Env.def val) destEnv
   }
 
-  ∇throw error
-   error ⎕signal 100
-  ∇
 
   ⍝ TODO check name is actually a symbol
   evDef←{
@@ -198,8 +185,7 @@
       res fn←⍺isMC⍵
       ~res: ⍵
       newForm←fn core.cons (core.list quote¨(2⊃core.cdr⍵))
-      ast←⍺eval newForm
-      ast
+      ⍺eval newForm
     }
 
     form←⍺macroexpand⍵
@@ -209,7 +195,7 @@
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃form: form             ⍝ keywords
       (2⊃form) Env.in ⍺: (⍺Env.get(2⊃form))
-      throw E.nameError 2⊃form
+      E.NameError E.throw 2⊃form
     }⍬
 
     (~ty∊T.(List Vec Map)): form   ⍝ Other self evaluating stuff
@@ -227,7 +213,7 @@
     T.Symbol 'defmacro!'≡head: ⍺{
       name mFn←2⊃tail
       t v←val←⍺ eval mFn
-      t≢T.Function: T.Function #.m.e.ty val
+      t≢T.Function: T.Function E.ty val
       v.isMacro←1
       _←(((2⊃name) Env.def val) ⍺)
       val
@@ -303,7 +289,7 @@
       A←1↓A
       A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
 
-      ~ty∊T.Function T.Builtin: T.Function T.Builtin #.m.e.ty ty F
+      ~ty∊T.Function T.Builtin: T.Function T.Builtin E.ty ty F
 
       ty=T.Builtin: ⍺ F.call A
 
@@ -315,13 +301,11 @@
     ty=T.Builtin: ⍺ F.call A
 
     ⍝ Type error when non callable
-    ty≠T.Function: T.Function T.Builtin #.m.E.ty ty F
+    ty≠T.Function: T.Function T.Builtin E.ty ty F
 
     newEnv←F prepareEnv A
     newEnv eval F.exp
   }
-
-  print←##.Printer.print_readably
 
   ∇R←env rep input
    :Trap 100

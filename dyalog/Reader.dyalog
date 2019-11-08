@@ -12,8 +12,8 @@
 ⍝ Also: try representing parsers as tables.
 
  :Namespace Reader
-   T←##.T
-   C←##.C
+   T←##.Types
+   C←##.Chars
    Env←##.Env
    ⍝ Debug
    ⍝ Parser combinators

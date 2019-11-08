@@ -1,4 +1,4 @@
- :Namespace T
+ :Namespace Types
    ⍝ Special Builtin Symbol Number String List Vec Map Function Bool Atom Error←⍳12
    Special←'⋄'
    Builtin←'⌺'
@@ -20,8 +20,8 @@
    ATOMS←⍬
 
    newAtom←{
-     #.T.ATOMS,←⊂⍵
-     #.T.Atom (≢#.T.ATOMS)
+     ATOMS,←⊂⍵
+     Atom (≢ATOMS)
    }
 
    deref←{(2⊃⍵)⊃ATOMS}

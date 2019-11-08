@@ -6,11 +6,10 @@
 :Require file://C.dyalog
 :Require file://core.dyalog
 :Namespace m
-  T←#.T
-  Env←#.Env
-  C←#.C
+  ⍝ import
+  T Env C core←#.(T Env C core)
+
   ARGV←⍬
-  core←#.core
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}

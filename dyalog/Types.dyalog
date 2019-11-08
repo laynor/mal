@@ -19,6 +19,7 @@
 
    ⍝ Lists
    empty←List⍬
+   cons←{List ((⊂⍺),2⊃⍵)}
    car←{
      ⍵≡nil: nil
      ⊃(2⊃⍵),⊂nil
@@ -30,6 +31,8 @@
    }
 
    nth←{(⊂⍺)⌷2⊃⍵}
+   last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
+   butlast←{0=≢2⊃⍵: nil ⋄ (⊃⍵) (¯1↓2⊃⍵)}
 
    eq←{
      eqLst←{

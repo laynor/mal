@@ -25,7 +25,6 @@
   list←L,⊂
 
 
-  cons←{list (⊂⍺),2⊃⍵}
 
 
   eq←{B,⊃∧/2 T.eq/⍵}
@@ -42,8 +41,8 @@
   lt←{∧/ 2</⍵}mkRelFn
   lte←{∧/ 2≤/⍵}mkRelFn
 
-  last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
-  butlast←{0=≢2⊃⍵: nil ⋄ (⊃⍵) (¯1↓2⊃⍵)}
+  last←{T.last⊃⍵}
+  butlast←{T.butlast⊃⍵}
   concat←{list⊃,/2∘⊃¨#.m.SE ⍵}
   fmap←{(⊃⍵) (⍺⍺¨2⊃⍵)}
 
@@ -56,4 +55,5 @@
     i>≢2⊃⍵: indexError i
     ⊃i T.nth (concat (⊃⍵) (L (i⍴⊂nil)))
   }
+  cons←{(⊃⍵)T.cons 2⊃⍵}
 :EndNamespace

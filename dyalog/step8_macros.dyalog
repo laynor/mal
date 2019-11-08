@@ -19,6 +19,7 @@
   car←T.car
   cdr←T.cdr
   nth←T.nth
+  cons←T.cons
   nil←T.nil
   read←R.read
   print←P.print_readably
@@ -51,9 +52,9 @@
     _←('cdr'         defn     core.rest) e
     _←('rest'        defn     core.rest) e
     _←('nth'         defn     core.nth) e
-    _←('last'        defn     {core.last⊃⍵}) e
-    _←('butlast'     defn     {core.butlast⊃⍵}) e
-    _←('cons'        defn     {(⊃⍵)core.cons 2⊃⍵}) e
+    _←('last'        defn     core.last) e
+    _←('butlast'     defn     core.butlast) e
+    _←('cons'        defn     core.cons) e
     _←('concat'      defn     {core.concat ⍵}) e
     _←('list'        defn     {core.list⍵}) e
     _←('list?'       defn     {T.bool T.List=⊃⊃⍵}) e
@@ -156,7 +157,7 @@
       ~isCons⍵: ⍵
       res fn←⍺isMC⍵
       ~res: ⍵
-      newForm←fn core.cons (core.list quote¨(2⊃cdr⍵))
+      newForm←fn cons (core.list quote¨(2⊃cdr⍵))
       ⍺eval newForm
     }
 

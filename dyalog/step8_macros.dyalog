@@ -15,17 +15,18 @@
 
   ARGV←⍬
 
+  ⍝ importing some names
+  car←T.car
+  cdr←T.cdr
+  nil←T.nil
   read←R.read
   print←P.print_readably
 
   typeError←E.TypeError∘E.throw
 
-  ⍝ Would really like to avoid having to fully qualify namespaces here
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
 
-  GLOBAL←1
-
-  nil←T.nil
+  GLOBAL←1                      ⍝ Global environment
 
   initBaseEnv←{
     e←GLOBAL
@@ -43,10 +44,10 @@
     _←('>='          defn     core.gte) e
     _←('<='          defn     core.lte) e
     _←('='           defn     core.eq) e
-    _←('car'         defn     {core.car⊃⍵}) e
-    _←('first'       defn     {core.car⊃⍵}) e
-    _←('cdr'         defn     {core.cdr⊃⍵}) e
-    _←('rest'        defn     {core.cdr⊃⍵}) e
+    _←('car'         defn     core.first) e
+    _←('first'       defn     core.first) e
+    _←('cdr'         defn     core.rest) e
+    _←('rest'        defn     core.rest) e
     _←('nth'         defn     {
       i←1+2⊃2⊃⍵
       i>≢2⊃⍵: E.IndexError E.throw i
@@ -75,8 +76,8 @@
   }
 
   evFn←{
-    F←core.car ⍵
-    A←2⊃core.cdr ⍵
+    F←car ⍵
+    A←2⊃cdr ⍵
     (ty f)←⍺ ⍺⍺ F
     ~ty∊T.(Function Builtin): typeError T.(Function Builtin) F
     ⍺ f.call ⍺∘⍺⍺¨A
@@ -149,15 +150,15 @@
     macroexpand←{
       quote←{core.list (T.Symbol 'quote') ⍵}
       isMC←{
-        T.Symbol≢⊃core.car⍵: 0 T.nil
-        t v←⍺Env.get 2⊃core.car⍵
+        T.Symbol≢⊃car⍵: 0 T.nil
+        t v←⍺Env.get 2⊃car⍵
         (t≠T.Function): 0 T.nil
         v.isMacro (t v)
       }
       ~isCons⍵: ⍵
       res fn←⍺isMC⍵
       ~res: ⍵
-      newForm←fn core.cons (core.list quote¨(2⊃core.cdr⍵))
+      newForm←fn core.cons (core.list quote¨(2⊃cdr⍵))
       ⍺eval newForm
     }
 
@@ -180,8 +181,8 @@
     ⍝ Lists
 
     0=≢2⊃form: form
-    head←core.car form
-    tail←core.cdr form
+    head←car form
+    tail←cdr form
     T.Symbol 'def!'≡head:      ⍺(eval evDef)2⊃tail
     T.Symbol 'defmacro!'≡head: ⍺{
       name mFn←2⊃tail
@@ -216,22 +217,19 @@
     }⍵
 
     T.Symbol 'quote'≡head: ⍺{
-      core.car tail
+      car tail
     }⍵
 
     T.Symbol 'quasiquote'≡head: ⍺{
       qq←{
         L S V←T.(List Symbol Vec)
-        car←core.car
-        cdr←core.cdr
-
         ~isCons ⍵:                    L ((S 'quote') ⍵)
         S 'unquote'≡car⍵:             car cdr⍵
         ~isCons car⍵:                 L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
         ~S 'splice-unquote'≡car car⍵: L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
                                       L ((S 'concat') (car cdr car⍵) (∇cdr⍵))
       }
-      x←qq core.car tail
+      x←qq car tail
       ⍺eval x
     }⍵
 
@@ -254,7 +252,7 @@
     }
 
     F≡'macroexpand': ⍺{
-      ⍺macroexpand⍣≡core.car tail
+      ⍺macroexpand⍣≡car tail
     }⍵
 
     F≡'apply': ⍺{
@@ -283,7 +281,7 @@
   ∇R←env rep input
    :Trap 100
      v←env eval read input
-     R←print v
+     R←P.print_readably v
    :Case 100
      R←⎕dmx.EM
    :EndTrap

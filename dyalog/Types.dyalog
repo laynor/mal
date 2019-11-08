@@ -17,6 +17,18 @@
    false←Bool 0
    nil←Symbol 'nil'
 
+   ⍝ Lists
+   empty←List⍬
+   car←{
+     ⍵≡nil: nil
+     ⊃(2⊃⍵),⊂nil
+   }
+
+   cdr←{
+     nil≡⍵: empty
+     List (⍬,1↓2⊃⍵)
+   }
+
    eq←{
      eqLst←{
        (≢⍺)≠≢⍵: 0
@@ -44,6 +56,7 @@
    }
 
    bool←{(1+⍵)⊃false true}
+
 
    mkFn←{
      ⍺←0

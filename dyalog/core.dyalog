@@ -1,7 +1,7 @@
 :Require file://Types.dyalog
 :Namespace core
   E T←#.(Errors Types)
-  N S L V B nil←T.(Number Symbol List Vec Bool nil)
+  N S L V B nil empty←T.(Number Symbol List Vec Bool nil empty)
 
   typeError←E.TypeError∘E.throw
 
@@ -23,19 +23,9 @@
   vec←V,⊂
   list←L,⊂
 
-  empty←L⍬
 
   cons←{list (⊂⍺),2⊃⍵}
 
-  car←{
-    ⍵≡nil: nil
-    ⊃(2⊃⍵),⊂nil
-  }
-
-  cdr←{
-    nil≡⍵: empty
-    list (⍬,1↓2⊃⍵)
-  }
 
   eq←{B,⊃∧/2 T.eq/⍵}
 
@@ -56,5 +46,10 @@
   concat←{list⊃,/2∘⊃¨#.m.SE ⍵}
   nth←{(⊂⍺)⌷2⊃⍵}
   fmap←{(⊃⍵) (⍺⍺¨2⊃⍵)}
+
+  first←{T.car⊃⍵}
+  rest←{T.cdr⊃⍵}
+  car←T.car
+  cdr←T.cdr
 
 :EndNamespace

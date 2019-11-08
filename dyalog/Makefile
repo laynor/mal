@@ -12,6 +12,8 @@ SRCS = step0_repl.dyalogbuild \
 BINS = $(SRCS:%.dyalogbuild=Distribution/%.dws)
 SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
+OTHER_SRCS = C.dyalog core.dyalog debug.dyalog env.dyalog Errors.dyalog Printer.dyalog Reader.dyalog Types.dyalog
+
 all : $(BINS)
 
 $(BINS):  Distribution/%.dws: %.dyalogbuild %.dyalog $(OTHER_SRCS)

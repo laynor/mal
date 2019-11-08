@@ -3,7 +3,8 @@
   E T←#.(Errors Types)
   N S L V B nil empty←T.(Number Symbol List Vec Bool nil empty)
 
-  typeError←E.TypeError∘E.throw
+  typeError←E.(TypeError∘throw)
+  indexError←E.(IndexError∘throw)
 
   mkNumFn←{
     NaN←(N=⊃¨⍵)⍳0
@@ -44,12 +45,15 @@
   last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
   butlast←{0=≢2⊃⍵: nil ⋄ (⊃⍵) (¯1↓2⊃⍵)}
   concat←{list⊃,/2∘⊃¨#.m.SE ⍵}
-  nth←{(⊂⍺)⌷2⊃⍵}
   fmap←{(⊃⍵) (⍺⍺¨2⊃⍵)}
 
   first←{T.car⊃⍵}
   rest←{T.cdr⊃⍵}
   car←T.car
   cdr←T.cdr
-
+  nth←{
+    i←1+2⊃2⊃⍵
+    i>≢2⊃⍵: indexError i
+    ⊃i T.nth (concat (⊃⍵) (L (i⍴⊂nil)))
+  }
 :EndNamespace

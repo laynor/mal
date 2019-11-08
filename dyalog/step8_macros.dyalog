@@ -18,11 +18,13 @@
   ⍝ importing some names
   car←T.car
   cdr←T.cdr
+  nth←T.nth
   nil←T.nil
   read←R.read
   print←P.print_readably
 
-  typeError←E.TypeError∘E.throw
+  ⍝ Some utility functions
+  typeError←E.(TypeError∘throw)
 
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
 
@@ -48,11 +50,7 @@
     _←('first'       defn     core.first) e
     _←('cdr'         defn     core.rest) e
     _←('rest'        defn     core.rest) e
-    _←('nth'         defn     {
-      i←1+2⊃2⊃⍵
-      i>≢2⊃⍵: E.IndexError E.throw i
-      ⊃i core.nth(core.concat (⊃⍵) (T.List (i⍴⊂T.nil)))
-    }) e
+    _←('nth'         defn     core.nth) e
     _←('last'        defn     {core.last⊃⍵}) e
     _←('butlast'     defn     {core.butlast⊃⍵}) e
     _←('cons'        defn     {(⊃⍵)core.cons 2⊃⍵}) e

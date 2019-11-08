@@ -5,9 +5,10 @@
 :Require file://Printer.dyalog
 :Require file://C.dyalog
 :Require file://core.dyalog
+
 :Namespace m
   ⍝ import
-  T Env C core←#.(T Env C core)
+  T Env C core P R←#.(T Env C core Printer Reader)
 
   ARGV←⍬
 

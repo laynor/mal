@@ -16,18 +16,20 @@
   read←R.read
   print←P.print_readably
 
+  typeError←E.TypeError∘E.throw
+
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
     N←T.Number
     NaN←(N=⊃¨⍵)⍳0
     NaN>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-            N E.ty (NaN⊃⍵)
+            typeError N (NaN⊃⍵)
   }
 
   mkRelFn←{
     nonNumber←(T.Number=⊃¨⍵)⍳0
     nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    T.Number E.ty (nonNumber⊃⍵)
+    typeError T.Number (nonNumber⊃⍵)
   }
 
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
@@ -105,7 +107,7 @@
     F←core.car ⍵
     A←2⊃core.cdr ⍵
     (ty f)←⍺ ⍺⍺ F
-    ~ty∊T.Function T.Builtin: T.Function T.Builtin E.ty F
+    ~ty∊T.(Function Builtin): typeError T.(Function Builtin) F
     ⍺ f.call ⍺∘⍺⍺¨A
   }
 

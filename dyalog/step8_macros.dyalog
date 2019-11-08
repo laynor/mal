@@ -18,7 +18,7 @@
     indexError←{'Index error, ', #.Printer.print ⍵}
 
     ty←{
-      msg←#.('Type Error: expected ', (⊃{⍺,', ',⍵}/T.typeName¨ ⍺), ', found ', (T.typeName ⊃⍵)),' (', (⍕⍵), ').'
+      msg←#.('Type Error: expected ', (⊃{⍺,', ',⍵}/T.typeName¨ ⍺), ', found ', (T.typeName ⊃⍵)),'.'
       #.m.throw msg
     }
   :EndNamespace
@@ -84,7 +84,11 @@
     _←('first'       defn     {#.core.car⊃⍵}) e
     _←('cdr'         defn     {#.core.cdr⊃⍵}) e
     _←('rest'        defn     {#.core.cdr⊃⍵}) e
-    _←('nth'         defn     {⊃i #.core.nth(#.core.concat (⊃⍵) (#.T.List (i⍴⊂#.T.nil)))⊣i←1+2⊃2⊃⍵}) e
+    _←('nth'         defn     {
+      i←1+2⊃2⊃⍵
+      i>≢2⊃⍵: #.m.throw 'Index error'
+      ⊃i #.core.nth(#.core.concat (⊃⍵) (#.T.List (i⍴⊂#.T.nil)))
+    }) e
     _←('last'        defn     {#.core.last⊃⍵}) e
     _←('butlast'     defn     {#.core.butlast⊃⍵}) e
     _←('cons'        defn     {(⊃⍵)#.core.cons 2⊃⍵}) e
@@ -317,15 +321,14 @@
     newEnv eval F.exp
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
   ∇R←env rep input
    :Trap 100
      v←env eval read input
      R←print v
    :Case 100
-     ⎕←⎕dmx.EM
-     R←(T.Symbol ,⊂'nil') env
+     R←⎕dmx.EM
    :EndTrap
   ∇
 

@@ -14,7 +14,9 @@
   }
   last←{0=≢2⊃⍵: nil ⋄ ⊃¯1↑2⊃⍵}
   butlast←{0=≢2⊃⍵: nil ⋄ (⊃⍵) (¯1↓2⊃⍵)}
-  concat←{list⊃,/2∘⊃¨⍵}
+  concat←{
+    list⊃,/2∘⊃¨#.m.SE ⍵
+  }
   nth←{(⊂⍺)⌷2⊃⍵}
   fmap←{(⊃⍵) (⍺⍺¨2⊃⍵)}
 :EndNamespace

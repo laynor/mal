@@ -27,8 +27,6 @@
 
   nil←T.nil
 
-  eq←T.eq
-
   initBaseEnv←{
     e←GLOBAL
     _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
@@ -44,7 +42,7 @@
     _←('<'           defn     core.lt) e
     _←('>='          defn     core.gte) e
     _←('<='          defn     core.lte) e
-    _←('='           defn     {T.bool ⊃∧/ 2 eq/⍵}) e
+    _←('='           defn     core.eq) e
     _←('car'         defn     {core.car⊃⍵}) e
     _←('first'       defn     {core.car⊃⍵}) e
     _←('cdr'         defn     {core.cdr⊃⍵}) e

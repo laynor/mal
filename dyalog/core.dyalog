@@ -37,6 +37,8 @@
     list (⍬,1↓2⊃⍵)
   }
 
+  eq←{B,⊃∧/2 T.eq/⍵}
+
   ⍝ numerical operators
   plus←(+/)mkNumFn
   minus←(⊃1∘↑-(+/1∘↓))mkNumFn

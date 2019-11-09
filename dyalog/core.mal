@@ -1,4 +1,6 @@
 ;; Core mal functions
+(def! apply (fn* [f & args] (apply-internal f args)))
+(defmacro! macroexpand (fn* [form] (quasiquote (macroexpand-internal (unquote form)))))
 (def! not (fn* [o] (if o false true)))
 (def! swap!
     (fn* (a f & args)

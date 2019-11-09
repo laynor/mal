@@ -53,7 +53,6 @@
     _←('='           defn  core.eq)                 e
     _←('>='          defn  core.gte)                e
     _←('>'           defn  core.gt)                 e
-    _←('apply'       def   core.apply)              e
     _←('atom'        defn  core.atom)               e
     _←('atom?'       defn  core.isAtom)             e
     _←('butlast'     defn  core.butlast)            e
@@ -69,7 +68,6 @@
     _←('last'        defn  core.last)               e
     _←('list'        defn  core.list)               e
     _←('list?'       defn  core.isList)             e
-    _←('macroexpand' def   core.macroexpand)        e
     _←('nil'         def   core.nil)                e
     _←('nth'         defn  core.nth)                e
     _←('pr-str'      defn  core.prStr)              e
@@ -191,8 +189,9 @@
       ⍺eval x
     }⍵
 
-    (ty F)←⍺ eval head
-    A←⍺∘eval¨SE 2⊃tail
+    T.Symbol 'macroexpand-internal'≡head: ⍺{
+      ⍺macroexpand⍣≡car tail
+    }⍵
 
     prepareEnv←{
       F A←⍺ ⍵
@@ -209,11 +208,7 @@
       newEnv
     }
 
-    F≡'macroexpand': ⍺{
-      ⍺macroexpand⍣≡car tail
-    }⍵
-
-    F≡'apply': ⍺{
+    T.Symbol 'apply-internal'≡head: ⍺{
       ty F←⊃A
       A←1↓A
       A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
@@ -225,6 +220,10 @@
       newEnv←F prepareEnv A
       newEnv eval F.exp
     }⍵
+
+
+    (ty F)←⍺ eval head
+    A←⍺∘eval¨SE 2⊃tail
 
     ⍝ Builtin function call
     ty=T.Builtin: ⍺ F.call A

@@ -74,9 +74,4 @@
   isAtom←{T.bool T.Atom≡⊃⊃⍵}
   deref←{T.deref⊃⍵}
   reset←{(⊃⍵) T.set (2⊃⍵)}
-
-  ⍝ Dummy builtins (implemented inside eval)
-  apply←T.Builtin 'apply'
-  macroexpand←T.Builtin 'macroexpand'
-
 :EndNamespace

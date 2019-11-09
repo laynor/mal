@@ -1,17 +1,17 @@
  :Namespace Types
-   ⍝ Special Builtin Symbol Number String List Vec Map Function Bool Atom Error←⍳12
-   Special←'⋄'
-   Builtin←'⌺'
-   Symbol←'⍺'
-   Number←'N'
-   String←'S'
-   List←'L'
-   Vec←'V'
-   Map←'M'
-   Function←'∇'
-   Bool←'B'
+   ⍝ Types
    Atom←'A'
+   Bool←'B'
+   Builtin←'⌺'
    Error←'E'
+   Function←'∇'
+   List←'L'
+   Map←'M'
+   Number←'N'
+   Special←'⋄'
+   String←'S'
+   Symbol←'⍺'
+   Vec←'V'
 
    true←Bool 1
    false←Bool 0
@@ -66,37 +66,15 @@
    mkBuiltin←{
      ⍺←0
      ns←⎕NS''
-     ns.tag←⍺
+     ns.(tag data)←⍺ ⍵
      ns.call←⍺⍺
-     ns.data←⍵
      Builtin ns
    }
 
    mkFunction←{
-     params exp←⍵
-
      F←⎕ns''
-     F.env←⍺
-     F.params←params
-     F.exp←exp
-     F.isMacro←0
+     F.(isMacro env (params exp))←0 ⍺ ⍵
      Function F
-   }
-
-   typeName←{
-     ⍵≡Error:    'Error'
-     ⍵≡Function: 'Function'
-     ⍵≡Builtin:  'Builtin'
-     ⍵≡List:     'List'
-     ⍵≡Map:      'Map'
-     ⍵≡Number:   'Number'
-     ⍵≡Special:  'Invalid'
-     ⍵≡String:   'String'
-     ⍵≡Symbol:   'Symbol'
-     ⍵≡Bool:     'Bool'
-     ⍵≡Vec:      'Vec'
-     ⍵≡Atom:     'Atom'
-                 'Unknown'
    }
 
  :EndNamespace

@@ -13,6 +13,23 @@
     ∊unescape1¨⍵
   }
 
+  typeName←{
+    ⍵≡T.Error:    'Error'
+    ⍵≡T.Function: 'Function'
+    ⍵≡T.Builtin:  'Builtin'
+    ⍵≡T.List:     'List'
+    ⍵≡T.Map:      'Map'
+    ⍵≡T.Number:   'Number'
+    ⍵≡T.Special:  'Invalid'
+    ⍵≡T.String:   'String'
+    ⍵≡T.Symbol:   'Symbol'
+    ⍵≡T.Bool:     'Bool'
+    ⍵≡T.Vec:      'Vec'
+    ⍵≡T.Atom:     'Atom'
+                  'Unknown'
+  }
+
+
   print_readably←{
     t v←⍵
     t≡T.Number: ('¯'⎕r'-')trim⍕v

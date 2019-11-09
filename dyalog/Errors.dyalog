@@ -6,7 +6,7 @@
 
   nameError←{'Name error: ''',⍵,''' not found.'}
   indexError←{'Index error, ', P.print ⍵}
-  typeError←{('Type Error: expected ', (⊃{⍺,', ',⍵}/T.typeName¨ ⍺), ', found ', (T.typeName ⊃⍵)),'.'}
+  typeError←{('Type Error: expected ', (⊃{⍺,', ',⍵}/P.typeName¨ ⍺), ', found ', (P.typeName ⊃⍵)),'.'}
   ty←{
     TypeError throw ⍺ ⍵
   }

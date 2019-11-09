@@ -15,6 +15,8 @@
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: do not execute when empty vector
   C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
+  L Str←T.(List String)
+
   ARGV←⍬
 
   ⍝ importing some names
@@ -28,6 +30,7 @@
 
   ⍝ Some utility functions
   typeError←E.(TypeError∘throw)
+  nameError←E.(NameError∘throw)
 
   def←{(⍺⍺ Env.def ⍵⍵)⍵}
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
@@ -36,10 +39,10 @@
 
   initBaseEnv←{
     e←GLOBAL
-    ARGV←T.List ({T.String ⍵}¨⊃⍵)
+    ARGV←L ({Str ⍵}¨⊃⍵)
 
     _←('*ARGV*'      def   ARGV)                    e
-    _←('envs'        defn  {⎕←Env.ENV ⋄ T.nil})     e
+    _←('envs'        defn  {⎕←Env.ENV ⋄ nil})     e
     _←('eval'        defn  {GLOBAL eval⊃⍵})         e
     _←('+'           defn  core.plus)               e
     _←('-'           defn  core.minus)              e
@@ -80,14 +83,6 @@
     GLOBAL
   }
 
-  evFn←{
-    F←car ⍵
-    A←2⊃cdr ⍵
-    (ty f)←⍺ ⍺⍺ F
-    ~ty∊T.(Function Builtin): typeError T.(Function Builtin) F
-    ⍺ f.call ⍺∘⍺⍺¨A
-  }
-
   evBinding←{
     name form←⍵
     evEnv destEnv←⍺
@@ -113,9 +108,9 @@
     macroexpand←{
       quote←{core.list (T.Symbol 'quote') ⍵}
       isMC←{
-        T.Symbol≢⊃car⍵: 0 T.nil
+        T.Symbol≢⊃car⍵: 0 nil
         t v←⍺Env.get 2⊃car⍵
-        (t≠T.Function): 0 T.nil
+        (t≠T.Function): 0 nil
         v.isMacro (t v)
       }
       ~isCons⍵: ⍵
@@ -168,12 +163,12 @@
     T.Symbol 'do'≡head: ⍺{
       forms←2⊃tail
       x←⍺∘eval¨SE forms
-      0=≢x: T.nil
+      0=≢x: nil
       ⊃¯1↑x
     }⍬
 
     T.Symbol 'if'≡head: ⍺{
-      cond then else←3↑(2⊃tail),⊂T.nil
+      cond then else←3↑(2⊃tail),⊂nil
       c←⍺eval cond
       ~(⊂c)∊nil T.false: ⍺eval then
       ⍺eval else

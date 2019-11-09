@@ -44,11 +44,10 @@
     B⍪←{GLOBAL eval⊃⍵}    Env.fbind 'eval'
     B⍪←{⎕←Env.ENV ⋄ nil}  Env.fbind 'envs'
     B⍪←{nil⊣⎕←#.display⍵} Env.fbind 'display'
+
     _←GLOBAL Env.defAll core.EXPORTS
     _←GLOBAL Env.defAll B
 
-    ⍝ _←('*ARGV*' Env.def ARGV) GLOBAL
-    ⍝ _←GLOBAL Env.defAll B
     GLOBAL
   }
 

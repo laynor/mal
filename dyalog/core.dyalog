@@ -1,10 +1,15 @@
+:Require file://Errors.dyalog
+:Require file://Printer.dyalog
+:Require file://Reader.dyalog
 :Require file://Types.dyalog
 :Namespace core
-  E T←#.(Errors Types)
-  N S L V B nil empty←T.(Number Symbol List Vec Bool nil empty)
+  C E P R T←#.(Chars Errors Printer Reader Types)
+  N S Str L V B nil empty←T.(Number Symbol String List Vec Bool nil empty)
 
   typeError←E.(TypeError∘throw)
   indexError←E.(IndexError∘throw)
+
+  SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: return argument if emtpy
 
   mkNumFn←{
     NaN←(N=⊃¨⍵)⍳0
@@ -13,19 +18,27 @@
   }
 
   mkRelFn←{
-
     NaN←(N=⊃¨⍵)⍳0
     NaN>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
     typeError N (NaN⊃⍵)
   }
 
-
   ⍝ Seqs
-  vec←V,⊂
-  list←L,⊂
-
-
-
+  vec←{V,⊂⍵}
+  list←{L,⊂⍵}
+  count←{(2-S 'nil'≡⊃⍵)⊃(N 0) (N,≢2⊃⊃⍵)}
+  str←{Str (⊃,/P.print¨⍵)}
+  prStr←{Str (¯1↓⊃,/{(P.print_readably⍵),' '}¨SE ⍵)}
+  prn←{⍞←(¯1↓⊃,/{(P.print_readably⍵),' '}¨⍵),C.LF ⋄ T.nil}
+  println←{⍞←(¯1↓⊃,/{(P.print⍵),' '}¨⍵),C.LF ⋄ T.nil}
+  slurp←{Str (⊃⎕nget 2⊃⊃⍵)}
+  readString←{R.read 2⊃⊃⍵}
+  atom←{T.newAtom⊃⍵}
+  isAtom←{T.bool T.Atom≡⊃⊃⍵}
+  deref←{T.deref⊃⍵}
+  reset←{(⊃⍵) T.set (2⊃⍵)}
+  isList←{T.bool L=⊃⊃⍵}
+  isEmpty←{ty v←⊃⍵ ⋄ T.bool (ty∊L V)∧(0=≢v)}
 
   eq←{B,⊃∧/2 T.eq/⍵}
 
@@ -55,5 +68,11 @@
     i>≢2⊃⍵: indexError i
     ⊃i T.nth (concat (⊃⍵) (L (i⍴⊂nil)))
   }
+
   cons←{(⊃⍵)T.cons 2⊃⍵}
+
+  ⍝ Dummy builtins (implemented inside eval)
+  apply←T.Builtin 'apply'
+  macroexpand←T.Builtin 'macroexpand'
+
 :EndNamespace

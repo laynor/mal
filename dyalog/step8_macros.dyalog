@@ -11,6 +11,7 @@
 
 :Namespace m
   ⍝ import
+  SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: do not execute when empty vector
   C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
   ARGV←⍬
@@ -27,17 +28,19 @@
   ⍝ Some utility functions
   typeError←E.(TypeError∘throw)
 
+  def←{(⍺⍺ Env.def ⍵⍵)⍵}
   defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
 
   GLOBAL←1                      ⍝ Global environment
 
   initBaseEnv←{
     e←GLOBAL
-    _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
+    _←('*ARGV*'      def      (T.List ({T.String ⍵}¨⊃⍵))) e
     _←('envs'        defn     {⎕←Env.ENV ⋄ T.nil}) e
-    _←('nil'         Env.def  core.nil) e
-    _←('apply'       Env.def  T.Builtin 'apply') e
-    _←('macroexpand' Env.def  T.Builtin 'macroexpand') e
+    _←('eval'        defn     {GLOBAL eval⊃⍵}) e
+    _←('nil'         def      core.nil) e
+    _←('apply'       def      core.apply) e
+    _←('macroexpand' def      core.macroexpand) e
     _←('+'           defn     core.plus) e
     _←('-'           defn     core.minus) e
     _←('*'           defn     core.multiply)           e
@@ -55,22 +58,21 @@
     _←('last'        defn     core.last) e
     _←('butlast'     defn     core.butlast) e
     _←('cons'        defn     core.cons) e
-    _←('concat'      defn     {core.concat ⍵}) e
-    _←('list'        defn     {core.list⍵}) e
-    _←('list?'       defn     {T.bool T.List=⊃⊃⍵}) e
-    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊T.List T.Vec)∧(0=≢v)}) e
-    _←('str'         defn     {T.String (⊃,/P.print¨⍵)})e
-    _←('pr-str'      defn     {T.String (¯1↓⊃,/{(P.print_readably⍵),' '}¨SE ⍵)})e
-    _←('prn'         defn     {⍞←(¯1↓⊃,/{(P.print_readably⍵),' '}¨⍵),C.LF ⋄ T.nil})e
-    _←('println'     defn     {⍞←(¯1↓⊃,/{(P.print⍵),' '}¨⍵),C.LF ⋄ T.nil})e
-    _←('slurp'       defn     {T.String (⊃⎕nget 2⊃⊃⍵)}) e
-    _←('read-string' defn     {read 2⊃⊃⍵}) e
-    _←('eval'        defn     {GLOBAL eval⊃⍵}) e
-    _←('atom'        defn     (T.newAtom⊃)) e
-    _←('atom?'       defn     {T.bool T.Atom≡⊃⊃⍵})e
-    _←('deref'       defn     {T.deref⊃⍵}) e
-    _←('reset!'      defn     {(⊃⍵) T.set (2⊃⍵)}) e
-    _←('count'       defn     {(2-T.Symbol 'nil'≡⊃⍵)⊃(T.Number 0) (T.Number,≢2⊃⊃⍵)})e
+    _←('concat'      defn     core.concat) e
+    _←('list'        defn     core.list) e
+    _←('list?'       defn     core.isList) e
+    _←('empty?'      defn     core.isEmpty) e
+    _←('str'         defn     core.str)e
+    _←('pr-str'      defn     core.prStr)e
+    _←('prn'         defn     core.prn)e
+    _←('println'     defn     core.println)e
+    _←('slurp'       defn     core.slurp) e
+    _←('read-string' defn     core.readString) e
+    _←('atom'        defn     core.atom) e
+    _←('atom?'       defn     core.isAtom)e
+    _←('deref'       defn     core.deref) e
+    _←('reset!'      defn     core.reset) e
+    _←('count'       defn     core.count)e
     GLOBAL
   }
 
@@ -98,7 +100,6 @@
     val
   }
 
-  SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}        ⍝ safe each: do not execute when empty vector
 
   ⍝ TODO type check names
 

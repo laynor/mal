@@ -99,13 +99,13 @@
       isMC←{
         S≢⊃car⍵: 0 nil
         t v←⍺Env.get 2⊃car⍵
-        (t≠T.Function): 0 nil
+        t≠T.Function: 0 nil
         v.isMacro (t v)
       }
       ~isCons⍵: ⍵
       res fn←⍺isMC⍵
       ~res: ⍵
-      newForm←fn cons (core.list quote¨(2⊃cdr⍵))
+      newForm←fn cons (core.list quote¨(2⊃cdr⍵)) ⍝ TODO: extract map
       ⍺eval newForm
     }
 
@@ -114,18 +114,16 @@
     S≡⊃form: ⍺{
       ':'=⊃2⊃form: form         ⍝ keywords
       (2⊃form) Env.in ⍺: ⍺envget form
-      E.NameError E.throw 2⊃form
+      nameError 2⊃form
     }⍬
 
-    (~(⊃form)∊L V M): form       ⍝ Other self evaluating stuff
+    V M∊⍨⊃form: (⊃form) (⍺∘eval¨SE 2⊃form)  ⍝ Vectors
 
-    V≡⊃form: V (⍺∘eval¨SE 2⊃form)  ⍝ Vectors
-
-    M≡⊃form: M (⍺∘eval¨SE 2⊃form) ⍝ Maps
+    L≠⊃form: form               ⍝ Self evaluating stuff
+    0=≢2⊃form: form             ⍝ empty lists
 
     ⍝ Lists
 
-    0=≢2⊃form: form
     head tail←split form
 
     S 'def!'≡head: ⍺{
@@ -148,7 +146,7 @@
 
     S 'let*'≡head: ⍺{
       (_ bs) exp←tail                ⍝ TODO check type!
-      bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
+      bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)     ⍝ group by 2
       env←Env.new⍺
       _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
       env eval exp
@@ -162,9 +160,8 @@
 
     S 'if'≡head: ⍺{
       cond then else←3↑tail,⊂nil
-      c←⍺eval cond
-      ~(⊂c)∊nil T.false: ⍺eval then
-      ⍺eval else
+      ~(⊂⍺eval cond)∊nil T.false: ⍺eval then
+                                  ⍺eval else
     }⍵
 
     S 'quote'≡head: ⊃tail
@@ -177,8 +174,7 @@
         ~S 'splice-unquote'≡car car⍵: L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
                                       L ((S 'concat') (car cdr car⍵) (∇cdr⍵))
       }
-      x←qq⊃tail
-      ⍺eval x
+      ⍺eval qq⊃tail
     }⍵
 
     S 'macroexpand-internal'≡head: ⍺macroexpand⍣≡⊃tail
@@ -189,18 +185,18 @@
       P←2⊃F.params
       (_ x) y←¯2↑P
       V←1+x≡,'&'                              ⍝ varargs?
-      L←core.list (⊂S 'list')∘,        ⍝ enclose args in (list ...)
       P←V⊃P ((¯2↓P),⊂y)                       ⍝ param names
-      A←V⊃A (((¯1+⍴P)↑⍬,A),⊂T.List ((¯1+⍴P)↓⍬,A)) ⍝ actual args
+      A←V⊃A (((¯1+⍴P)↑⍬,A),⊂L ((¯1+⍴P)↓⍬,A))  ⍝ actual args
       bs←{⍺⍵}/(⍪P),(⍪A)                       ⍝ list of pairs
       newEnv←Env.new F.env
       _←{((2⊃⊃⍵) Env.def (2⊃⍵)) newEnv}¨SE bs
       newEnv
     }
 
+    ⍝ concatenazione di funzioni applicato a operatore per creare vettore di namespace
+
     S 'apply-internal'≡head: ⍺{
-      ty F←⊃A
-      A←1↓A
+      A (ty F)←(1∘↑,(⊂1∘↓))tail
       A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
 
       ~ty∊T.Function T.Builtin: T.Function T.Builtin E.ty ty F
@@ -225,14 +221,10 @@
     newEnv eval F.exp
   }
 
-  ∇R←env rep input
-   :Trap 100
-     v←env eval read input
-     R←P.print_readably v
-   :Case 100
-     R←⎕dmx.EM
-   :EndTrap
-  ∇
+  rep←{
+    100:: ⎕dmx.EM
+    P.print_readably ⍺ eval read ⍵
+  }
 
   init←{
     loadFile←'(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))'

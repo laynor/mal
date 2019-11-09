@@ -1,9 +1,10 @@
+:Require file://Env.dyalog
 :Require file://Errors.dyalog
 :Require file://Printer.dyalog
 :Require file://Reader.dyalog
 :Require file://Types.dyalog
 :Namespace core
-  C E P R T←#.(Chars Errors Printer Reader Types)
+  C E Env P R T←#.(Chars Errors Env Printer Reader Types)
   N S Str L V B nil empty←T.(Number Symbol String List Vec Bool nil empty)
 
   typeError←E.(TypeError∘throw)
@@ -74,4 +75,45 @@
   isAtom←{T.bool T.Atom≡⊃⊃⍵}
   deref←{T.deref⊃⍵}
   reset←{(⊃⍵) T.set (2⊃⍵)}
+
+
+
+  ∆←{⎕this.⍺⍺ Env.fbind ,⍵}
+  D←{1 2⍴⍵ ⍺}
+
+  EX ←nil         D  'nil'
+  EX⍪←plus        ∆  '+'
+  EX⍪←minus       ∆  '-'
+  EX⍪←multiply    ∆  '*'
+  EX⍪←divide      ∆  '/'
+  EX⍪←lt          ∆  '<'
+  EX⍪←lte         ∆  '<='
+  EX⍪←eq          ∆  '='
+  EX⍪←gte         ∆  '>='
+  EX⍪←gt          ∆  '>'
+  EX⍪←atom        ∆  'atom'
+  EX⍪←isAtom      ∆  'atom?'
+  EX⍪←butlast     ∆  'butlast'
+  EX⍪←first       ∆  'car'
+  EX⍪←rest        ∆  'cdr'
+  EX⍪←concat      ∆  'concat'
+  EX⍪←cons        ∆  'cons'
+  EX⍪←count       ∆  'count'
+  EX⍪←deref       ∆  'deref'
+  EX⍪←isEmpty     ∆  'empty?'
+  EX⍪←first       ∆  'first'
+  EX⍪←last        ∆  'last'
+  EX⍪←list        ∆  'list'
+  EX⍪←isList      ∆  'list?'
+  EX⍪←nth         ∆  'nth'
+  EX⍪←prStr       ∆  'pr-str'
+  EX⍪←println     ∆  'println'
+  EX⍪←prn         ∆  'prn'
+  EX⍪←readString  ∆  'read-string'
+  EX⍪←reset       ∆  'reset!'
+  EX⍪←rest        ∆  'rest'
+  EX⍪←slurp       ∆  'slurp'
+  EX⍪←str         ∆  'str'
+
+  EXPORTS←EX
 :EndNamespace

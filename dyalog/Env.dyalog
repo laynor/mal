@@ -1,12 +1,30 @@
 :Require file://Types.dyalog
 :Namespace Env
+  ⍝ Environments implemented as binding tables
+  ⍝ ┌→────────────────────────────────────────┐
+  ⍝ ↓ ┌→───────────┐ ┌→─────────────────────┐ │
+  ⍝ │ │dedicated-to│ │∇ #.Types.[Namespace] │ │
+  ⍝ │ └────────────┘ └+─────────────────────┘ │
+  ⍝ │ ┌→────┐        ┌→─────────────────────┐ │
+  ⍝ │ │hello│        │∇ #.Types.[Namespace] │ │
+  ⍝ │ └─────┘        └+─────────────────────┘ │
+  ⍝ │ ┌→──────┐      ┌→─────────────────────┐ │
+  ⍝ │ │unless2│      │∇ #.Types.[Namespace] │ │
+  ⍝ │ └───────┘      └+─────────────────────┘ │
+  ⍝ └∊────────────────────────────────────────┘
+
   T←#.Types
 
   empty←⊂0 2⍴'' 0
 
+  ⍝ ENV is vector of binding tables (environments).
+  ⍝ environment ids are index to the environments table.
   ENV←1⍴empty
   PARENT←,1
 
+  fbind←{1 2⍴⍵ (⍺⍺T.mkBuiltin⍬)}
+
+  ⍝ Takes a binding table and concatenates it to the current env
   ∇R←new cur;id
    id←1+≢ENV
    PARENT←PARENT,cur
@@ -28,6 +46,12 @@
    ENV[id]←⊂env2
    R←id
   ∇
+
+  defAll←{
+    (⊃ENV[⍺])⍪←⍵
+    ≢⊃ENV[⍺]
+  }
+
 
   idx←{
     in1←{(⊂,⍺)∊⍵[;1]}
@@ -51,5 +75,6 @@
   defn←{(⍺⍺ def (⍵⍵ T.mkBuiltin⍬)) ⍵}
 
   call←{f←⍺⍺ get ⍵⍵ ⋄ ⍵⍵ f.call ⍵}
+
 
 :EndNamespace

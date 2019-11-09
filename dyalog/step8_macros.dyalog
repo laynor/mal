@@ -1,4 +1,5 @@
 :Require file://debug.dyalog
+:Require file://display.dyalog
 
 :Require file://Chars.dyalog
 :Require file://Env.dyalog
@@ -59,6 +60,7 @@
     _←('cons'        defn  core.cons)                  e
     _←('count'       defn  core.count)                 e
     _←('deref'       defn  core.deref)                 e
+    _←('display'     defn  {core.nil⊣⎕←#.display⍵})    e
     _←('empty?'      defn  core.isEmpty)               e
     _←('first'       defn  core.first)                 e
     _←('last'        defn  core.last)                  e

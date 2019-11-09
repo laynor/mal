@@ -11,6 +11,8 @@
 
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: return argument if emtpy
 
+  eq←{B,⊃∧/2 T.eq/⍵}
+
   mkNumFn←{
     NaN←(N=⊃¨⍵)⍳0
     NaN>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
@@ -23,7 +25,18 @@
     typeError N (NaN⊃⍵)
   }
 
-  eq←{B,⊃∧/2 T.eq/⍵}
+  ⍝ numerical operators
+  plus←(+/)mkNumFn
+  minus←(⊃1∘↑-(+/1∘↓))mkNumFn
+  multiply←(×/)mkNumFn
+  divide←(⊃1∘↑÷(×/1∘↓))mkNumFn
+
+  ⍝ Relational operators
+  gt←{∧/ 2>/⍵}mkRelFn
+  gte←{∧/ 2≥/⍵}mkRelFn
+  lt←{∧/ 2</⍵}mkRelFn
+  lte←{∧/ 2≤/⍵}mkRelFn
+
 
   ⍝ strings
   str←{Str (⊃,/P.print¨⍵)}
@@ -61,19 +74,6 @@
   isAtom←{T.bool T.Atom≡⊃⊃⍵}
   deref←{T.deref⊃⍵}
   reset←{(⊃⍵) T.set (2⊃⍵)}
-
-
-  ⍝ numerical operators
-  plus←(+/)mkNumFn
-  minus←(⊃1∘↑-(+/1∘↓))mkNumFn
-  multiply←(×/)mkNumFn
-  divide←(⊃1∘↑÷(×/1∘↓))mkNumFn
-
-  ⍝ Relational operators
-  gt←{∧/ 2>/⍵}mkRelFn
-  gte←{∧/ 2≥/⍵}mkRelFn
-  lt←{∧/ 2</⍵}mkRelFn
-  lte←{∧/ 2≤/⍵}mkRelFn
 
   ⍝ Dummy builtins (implemented inside eval)
   apply←T.Builtin 'apply'

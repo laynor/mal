@@ -90,12 +90,7 @@
 
 
   ⍝ TODO check name is actually a symbol
-  evDef←{
-    name form←⍵
-    val←⍺ ⍺⍺ form
-    _←(((2⊃name) Env.def val) ⍺)
-    val
-  }
+
 
 
   ⍝ TODO type check names
@@ -139,7 +134,14 @@
     0=≢2⊃form: form
     head←car form
     tail←cdr form
-    T.Symbol 'def!'≡head:      ⍺(eval evDef)2⊃tail
+
+    T.Symbol 'def!'≡head: ⍺{
+      name form←2⊃tail
+      val←⍺ eval form
+      _←(((2⊃name) Env.def val) ⍺)
+      val
+    }⍵
+
     T.Symbol 'defmacro!'≡head: ⍺{
       name mFn←2⊃tail
       t v←val←⍺ eval mFn
@@ -158,6 +160,7 @@
       _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
       env eval exp
     }⍬
+
     T.Symbol 'do'≡head: ⍺{
       forms←2⊃tail
       x←⍺∘eval¨SE forms

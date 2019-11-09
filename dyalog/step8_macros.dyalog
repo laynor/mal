@@ -15,7 +15,7 @@
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: do not execute when empty vector
   C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
-  L S Str←T.(List Symbol String)
+  L V M S Str←T.(List Vec Map Symbol String)
 
   ARGV←⍬
 
@@ -91,7 +91,7 @@
   split←((⊂car),(⊂2⊃cdr))
 
   eval←{
-    isCons←{((⊃⍵)∊T.(List Vec))∧0<≢2⊃⍵}
+    isCons←{((⊃⍵)∊L V)∧0<≢2⊃⍵}
     envget←{⍺Env.get 2⊃⍵}
 
     macroexpand←{
@@ -111,19 +111,17 @@
 
     form←⍺macroexpand⍵
 
-    ty←⊃form
-
-    ty≡S: ⍺{
-      ':'=⊃2⊃form: form             ⍝ keywords
+    S≡⊃form: ⍺{
+      ':'=⊃2⊃form: form         ⍝ keywords
       (2⊃form) Env.in ⍺: ⍺envget form
       E.NameError E.throw 2⊃form
     }⍬
 
-    (~ty∊T.(List Vec Map)): form   ⍝ Other self evaluating stuff
+    (~(⊃form)∊L V M): form       ⍝ Other self evaluating stuff
 
-    ty≡T.Vec: T.Vec (⍺∘eval¨SE 2⊃form) ⍝ Vectors
+    V≡⊃form: V (⍺∘eval¨SE 2⊃form)  ⍝ Vectors
 
-    ty≡T.Map: T.Map (⍺∘eval¨SE 2⊃form) ⍝ Maps
+    M≡⊃form: M (⍺∘eval¨SE 2⊃form) ⍝ Maps
 
     ⍝ Lists
 
@@ -173,7 +171,6 @@
 
     S 'quasiquote'≡head: ⍺{
       qq←{
-        L S V←T.(List Symbol Vec)
         ~isCons ⍵:                    L ((S 'quote') ⍵)
         S 'unquote'≡car⍵:             car cdr⍵
         ~isCons car⍵:                 L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))

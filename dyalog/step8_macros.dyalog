@@ -233,40 +233,25 @@
     ⍬
   }
 
-  ∇R←repIO recur
-   prompt←'user> '
-   :Trap 1004
+  repIO←{
+    1004:: ¯2
+    ⍵≤0: ⍵
 
-     :If recur≤0
-       R←recur
-     :Else
-       ⍞←prompt
-       inp←(≢prompt)↓⍞
-       :Select inp
-       :Case ''
-         R←0
-       :Case '(exit)'
-         R←¯1
-       :Else
-         res←GLOBAL rep inp
-         ⍞←res,C.LF
-         R←recur+1
-       :EndSelect
-     :EndIf
-   :Else
-     R←¯2
-   :EndTrap
-  ∇
+    ⍞←p←'user> '
+    inp←(≢p)↓⍞
+    inp≡'': 0
+    inp≡'(exit)': ¯1
+    ⍞←(GLOBAL rep inp),C.LF
+    1+(2|⍵)
+  }
 
   getArgv←{
     argvFile←⎕sh 'echo $ARGV'
     0=≢⊃argvFile: ⍬
-    S _ _←⎕nget ⊃argvFile
+    txt←⊃⎕nget ⊃argvFile
 
-    (S≠C.LF)⊆S
+    (txt≠C.LF)⊆txt
   }
-
-
 
   ∇mapl
    Banner ←'⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵⍵',C.LF

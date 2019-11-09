@@ -63,7 +63,7 @@
    bool←{(1+⍵)⊃false true}
 
 
-   mkFn←{
+   mkBuiltin←{
      ⍺←0
      ns←⎕NS''
      ns.tag←⍺

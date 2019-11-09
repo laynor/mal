@@ -1,0 +1,22 @@
+;; Core mal functions
+(def! not (fn* [o] (if o false true)))
+(def! swap!
+    (fn* (a f & args)
+         (reset! a (apply f (deref a) args))))
+
+(defmacro! cond (fn* (& xs)
+                     (if (> (count xs) 0)
+                         (list 'if (first xs)
+                               (if (> (count xs) 1)
+                                   (nth xs 1)
+                                   (throw "odd number of forms to cond"))
+                               (cons 'cond (rest (rest xs)))))))
+
+(defmacro! unless2 (fn* (cond then else) `(if (not ~cond) ~then ~else)))
+
+(def! hello
+    (fn* (name)
+         (println (str "Yo " name "!"))))
+
+(def! dedicated-to
+    (fn* () (println "Dedicated to Saya. Love you forever <3")))

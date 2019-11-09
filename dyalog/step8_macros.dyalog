@@ -263,16 +263,9 @@
   ∇
 
   init←{
-    not ←'(def! not (fn* [o] (if o false true)))'
     loadFile←'(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))'
-    swap←'(def! swap! (fn* (a f & args) (reset! a (apply f (deref a) args))))'
-    cond←'(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list ''if (first xs) (if (> (count xs) 1) (nth xs 1) (throw "odd number of forms to cond")) (cons ''cond (rest (rest xs)))))))'
-    unless2←'(defmacro! unless2 (fn* (cond then else) `(if (not ~cond) ~then ~else)))'
-    _←GLOBAL eval (read not)
-    _←GLOBAL eval (read loadFile)
-    _←GLOBAL eval (read swap)
-    _←GLOBAL eval (read cond)
-    _←GLOBAL eval (read unless2)
+    _←GLOBAL eval read loadFile
+    _←GLOBAL eval read '(load-file "core.mal")'
     ⍬
   }
 

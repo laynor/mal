@@ -98,6 +98,7 @@
   split←((⊂car),(⊂2⊃cdr))
   eval←{
     isCons←{((⊃⍵)∊T.(List Vec))∧0<≢2⊃⍵}
+    envget←{⍺Env.get 2⊃⍵}
 
     macroexpand←{
       quote←{core.list (T.Symbol 'quote') ⍵}
@@ -120,7 +121,7 @@
 
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃form: form             ⍝ keywords
-      (2⊃form) Env.in ⍺: (⍺Env.get(2⊃form))
+      (2⊃form) Env.in ⍺: ⍺envget form
       E.NameError E.throw 2⊃form
     }⍬
 

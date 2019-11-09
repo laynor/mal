@@ -35,44 +35,46 @@
 
   initBaseEnv←{
     e←GLOBAL
-    _←('*ARGV*'      def      (T.List ({T.String ⍵}¨⊃⍵))) e
-    _←('envs'        defn     {⎕←Env.ENV ⋄ T.nil}) e
-    _←('eval'        defn     {GLOBAL eval⊃⍵}) e
-    _←('nil'         def      core.nil) e
-    _←('apply'       def      core.apply) e
-    _←('macroexpand' def      core.macroexpand) e
-    _←('+'           defn     core.plus) e
-    _←('-'           defn     core.minus) e
-    _←('*'           defn     core.multiply)           e
-    _←('/'           defn     core.divide) e
-    _←('>'           defn     core.gt) e
-    _←('<'           defn     core.lt) e
-    _←('>='          defn     core.gte) e
-    _←('<='          defn     core.lte) e
-    _←('='           defn     core.eq) e
-    _←('car'         defn     core.first) e
-    _←('first'       defn     core.first) e
-    _←('cdr'         defn     core.rest) e
-    _←('rest'        defn     core.rest) e
-    _←('nth'         defn     core.nth) e
-    _←('last'        defn     core.last) e
-    _←('butlast'     defn     core.butlast) e
-    _←('cons'        defn     core.cons) e
-    _←('concat'      defn     core.concat) e
-    _←('list'        defn     core.list) e
-    _←('list?'       defn     core.isList) e
-    _←('empty?'      defn     core.isEmpty) e
-    _←('str'         defn     core.str)e
-    _←('pr-str'      defn     core.prStr)e
-    _←('prn'         defn     core.prn)e
-    _←('println'     defn     core.println)e
-    _←('slurp'       defn     core.slurp) e
-    _←('read-string' defn     core.readString) e
-    _←('atom'        defn     core.atom) e
-    _←('atom?'       defn     core.isAtom)e
-    _←('deref'       defn     core.deref) e
-    _←('reset!'      defn     core.reset) e
-    _←('count'       defn     core.count)e
+    ARGV←T.List ({T.String ⍵}¨⊃⍵)
+
+    _←('*ARGV*'      def   ARGV) e
+    _←('envs'        defn  {⎕←Env.ENV ⋄ T.nil})        e
+    _←('eval'        defn  {GLOBAL eval⊃⍵})            e
+    _←('+'           defn  core.plus)                  e
+    _←('-'           defn  core.minus)                 e
+    _←('*'           defn  core.multiply)              e
+    _←('/'           defn  core.divide)                e
+    _←('<'           defn  core.lt)                    e
+    _←('<='          defn  core.lte)                   e
+    _←('='           defn  core.eq)                    e
+    _←('>='          defn  core.gte)                   e
+    _←('>'           defn  core.gt)                    e
+    _←('apply'       def   core.apply)                 e
+    _←('atom'        defn  core.atom)                  e
+    _←('atom?'       defn  core.isAtom)                e
+    _←('butlast'     defn  core.butlast)               e
+    _←('car'         defn  core.first)                 e
+    _←('cdr'         defn  core.rest)                  e
+    _←('concat'      defn  core.concat)                e
+    _←('cons'        defn  core.cons)                  e
+    _←('count'       defn  core.count)                 e
+    _←('deref'       defn  core.deref)                 e
+    _←('empty?'      defn  core.isEmpty)               e
+    _←('first'       defn  core.first)                 e
+    _←('last'        defn  core.last)                  e
+    _←('list'        defn  core.list)                  e
+    _←('list?'       defn  core.isList)                e
+    _←('macroexpand' def   core.macroexpand)           e
+    _←('nil'         def   core.nil)                   e
+    _←('nth'         defn  core.nth)                   e
+    _←('pr-str'      defn  core.prStr)                 e
+    _←('println'     defn  core.println)               e
+    _←('prn'         defn  core.prn)                   e
+    _←('read-string' defn  core.readString)            e
+    _←('reset!'      defn  core.reset)                 e
+    _←('rest'        defn  core.rest)                  e
+    _←('slurp'       defn  core.slurp)                 e
+    _←('str'         defn  core.str)                   e
     GLOBAL
   }
 
@@ -115,33 +117,6 @@
     F.isMacro←0
 
     T.Function F
-  }
-  display←{⎕IO ⎕ML←0 1                        ⍝ Boxed display of array.
-
-      box←{                                   ⍝ box with type and axes
-          vrt hrz←(¯1+⍴⍵)⍴¨'│─'               ⍝ vert. and horiz. lines
-          top←'─⊖→'[¯1↑⍺],hrz                 ⍝ upper border with axis
-          bot←(⊃⍺),hrz                        ⍝ lower border with type
-          rgt←'┐│',vrt,'┘'                    ⍝ right side with corners
-          lax←'│⌽↓'[¯1↓1↓⍺],¨⊂vrt             ⍝ left side(s) with axes,
-          lft←⍉'┌',(↑lax),'└'                 ⍝ ... and corners
-          lft,(top⍪⍵⍪bot),rgt                 ⍝ fully boxed array
-      }
-
-      deco←{⍺←type open ⍵ ⋄ ⍺,axes ⍵}         ⍝ type and axes vector
-      axes←{(-2⌈⍴⍴⍵)↑1+×⍴⍵}                   ⍝ array axis types
-      open←{16::(1⌈⍴⍵)⍴⊂'[ref]' ⋄ (1⌈⍴⍵)⍴⍵}   ⍝ exposure of null axes
-      trim←{(~1 1⍷∧⌿⍵=' ')/⍵}                 ⍝ removal of extra blank cols
-      type←{{(1=⍴⍵)⊃'+'⍵}∪,char¨⍵}            ⍝ simple array type
-      char←{⍬≡⍴⍵:'─' ⋄ (⊃⍵∊'¯',⎕D)⊃'#~'}∘⍕    ⍝ simple scalar type
-      line←{(6≠10|⎕DR' '⍵)⊃' -'}              ⍝ underline for atom
-
-      {                                       ⍝ recursive boxing of arrays:
-          0=≡⍵:' '⍪(open ⎕FMT ⍵)⍪line ⍵       ⍝ simple scalar
-          1 ⍬≡(≡⍵)(⍴⍵):'∇' 0 0 box ⎕FMT ⍵     ⍝ object rep: ⎕OR
-          1=≡⍵:(deco ⍵)box open ⎕FMT open ⍵   ⍝ simple array
-          ('∊'deco ⍵)box trim ⎕FMT ∇¨open ⍵   ⍝ nested array
-      }⍵
   }
   eval←{
 

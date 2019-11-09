@@ -107,21 +107,7 @@
 
   ⍝ TODO type check names
 
-  evFnStar←{
-    env←⍺
-    params exp←⍵
-    eval←⍺⍺
-
-    F←⎕ns''
-    F.params←params
-    F.env←env
-    F.exp←exp
-    F.isMacro←0
-
-    T.Function F
-  }
   eval←{
-
     isCons←{((⊃⍵)∊T.(List Vec))∧0<≢2⊃⍵}
 
     macroexpand←{
@@ -170,7 +156,7 @@
       val
     }⍬
 
-    T.Symbol 'fn*' ≡head: ⍺(eval evFnStar)2⊃tail
+    T.Symbol 'fn*' ≡head: ⍺T.mkFunction 2⊃tail
 
     T.Symbol 'let*'≡head: ⍺{
       (_ bs) exp←2⊃tail                ⍝ TODO check type!

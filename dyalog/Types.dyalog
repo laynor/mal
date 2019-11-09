@@ -72,6 +72,17 @@
      Builtin ns
    }
 
+   mkFunction←{
+     params exp←⍵
+
+     F←⎕ns''
+     F.env←⍺
+     F.params←params
+     F.exp←exp
+     F.isMacro←0
+     Function F
+   }
+
    typeName←{
      ⍵≡Error:    'Error'
      ⍵≡Function: 'Function'

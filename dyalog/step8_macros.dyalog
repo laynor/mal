@@ -172,9 +172,7 @@
       ⍺eval else
     }⍵
 
-    T.Symbol 'quote'≡head: ⍺{
-      car tail
-    }⍵
+    T.Symbol 'quote'≡head: car tail
 
     T.Symbol 'quasiquote'≡head: ⍺{
       qq←{
@@ -189,9 +187,7 @@
       ⍺eval x
     }⍵
 
-    T.Symbol 'macroexpand-internal'≡head: ⍺{
-      ⍺macroexpand⍣≡car tail
-    }⍵
+    T.Symbol 'macroexpand-internal'≡head: ⍺macroexpand⍣≡car tail
 
     prepareEnv←{
       F A←⍺ ⍵

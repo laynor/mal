@@ -95,6 +95,7 @@
 
   ⍝ TODO type check names
 
+  split←((⊂car),(⊂2⊃cdr))
   eval←{
     isCons←{((⊃⍵)∊T.(List Vec))∧0<≢2⊃⍵}
 
@@ -132,18 +133,17 @@
     ⍝ Lists
 
     0=≢2⊃form: form
-    head←car form
-    tail←cdr form
+    head tail←split form
 
     T.Symbol 'def!'≡head: ⍺{
-      name form←2⊃tail
+      name form←tail
       val←⍺ eval form
       _←(((2⊃name) Env.def val) ⍺)
       val
     }⍵
 
     T.Symbol 'defmacro!'≡head: ⍺{
-      name mFn←2⊃tail
+      name mFn←tail
       t v←val←⍺ eval mFn
       t≢T.Function: T.Function E.ty val
       v.isMacro←1
@@ -151,10 +151,10 @@
       val
     }⍬
 
-    T.Symbol 'fn*' ≡head: ⍺T.mkFunction 2⊃tail
+    T.Symbol 'fn*' ≡head: ⍺T.mkFunction tail
 
     T.Symbol 'let*'≡head: ⍺{
-      (_ bs) exp←2⊃tail                ⍝ TODO check type!
+      (_ bs) exp←tail                ⍝ TODO check type!
       bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
       env←Env.new⍺
       _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
@@ -162,20 +162,19 @@
     }⍬
 
     T.Symbol 'do'≡head: ⍺{
-      forms←2⊃tail
-      x←⍺∘eval¨SE forms
+      x←⍺∘eval¨SE tail
       0=≢x: nil
       ⊃¯1↑x
     }⍬
 
     T.Symbol 'if'≡head: ⍺{
-      cond then else←3↑(2⊃tail),⊂nil
+      cond then else←3↑tail,⊂nil
       c←⍺eval cond
       ~(⊂c)∊nil T.false: ⍺eval then
       ⍺eval else
     }⍵
 
-    T.Symbol 'quote'≡head: car tail
+    T.Symbol 'quote'≡head: ⊃tail
 
     T.Symbol 'quasiquote'≡head: ⍺{
       qq←{
@@ -186,11 +185,11 @@
         ~S 'splice-unquote'≡car car⍵: L ((S 'cons')   (∇ car⍵)       (∇cdr⍵))
                                       L ((S 'concat') (car cdr car⍵) (∇cdr⍵))
       }
-      x←qq car tail
+      x←qq⊃tail
       ⍺eval x
     }⍵
 
-    T.Symbol 'macroexpand-internal'≡head: ⍺macroexpand⍣≡car tail
+    T.Symbol 'macroexpand-internal'≡head: ⍺macroexpand⍣≡⊃tail
 
     prepareEnv←{
       F A←⍺ ⍵
@@ -222,7 +221,7 @@
 
 
     (ty F)←⍺ eval head
-    A←⍺∘eval¨SE 2⊃tail
+    A←⍺∘eval¨SE tail
 
     ⍝ Builtin function call
     ty=T.Builtin: ⍺ F.call A

@@ -15,7 +15,7 @@
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: do not execute when empty vector
   C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
-  L Str←T.(List String)
+  L S Str←T.(List Symbol String)
 
   ARGV←⍬
 
@@ -88,22 +88,16 @@
     ((2⊃name) Env.def val) destEnv
   }
 
-
-  ⍝ TODO check name is actually a symbol
-
-
-
-  ⍝ TODO type check names
-
   split←((⊂car),(⊂2⊃cdr))
+
   eval←{
     isCons←{((⊃⍵)∊T.(List Vec))∧0<≢2⊃⍵}
     envget←{⍺Env.get 2⊃⍵}
 
     macroexpand←{
-      quote←{core.list (T.Symbol 'quote') ⍵}
+      quote←{core.list (S 'quote') ⍵}
       isMC←{
-        T.Symbol≢⊃car⍵: 0 nil
+        S≢⊃car⍵: 0 nil
         t v←⍺Env.get 2⊃car⍵
         (t≠T.Function): 0 nil
         v.isMacro (t v)
@@ -119,7 +113,7 @@
 
     ty←⊃form
 
-    ty≡T.Symbol: ⍺{
+    ty≡S: ⍺{
       ':'=⊃2⊃form: form             ⍝ keywords
       (2⊃form) Env.in ⍺: ⍺envget form
       E.NameError E.throw 2⊃form
@@ -136,14 +130,14 @@
     0=≢2⊃form: form
     head tail←split form
 
-    T.Symbol 'def!'≡head: ⍺{
+    S 'def!'≡head: ⍺{
       name form←tail
       val←⍺ eval form
       _←(((2⊃name) Env.def val) ⍺)
       val
     }⍵
 
-    T.Symbol 'defmacro!'≡head: ⍺{
+    S 'defmacro!'≡head: ⍺{
       name mFn←tail
       t v←val←⍺ eval mFn
       t≢T.Function: T.Function E.ty val
@@ -152,9 +146,9 @@
       val
     }⍬
 
-    T.Symbol 'fn*' ≡head: ⍺T.mkFunction tail
+    S 'fn*' ≡head: ⍺T.mkFunction tail
 
-    T.Symbol 'let*'≡head: ⍺{
+    S 'let*'≡head: ⍺{
       (_ bs) exp←tail                ⍝ TODO check type!
       bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
       env←Env.new⍺
@@ -162,22 +156,22 @@
       env eval exp
     }⍬
 
-    T.Symbol 'do'≡head: ⍺{
+    S 'do'≡head: ⍺{
       x←⍺∘eval¨SE tail
       0=≢x: nil
       ⊃¯1↑x
     }⍬
 
-    T.Symbol 'if'≡head: ⍺{
+    S 'if'≡head: ⍺{
       cond then else←3↑tail,⊂nil
       c←⍺eval cond
       ~(⊂c)∊nil T.false: ⍺eval then
       ⍺eval else
     }⍵
 
-    T.Symbol 'quote'≡head: ⊃tail
+    S 'quote'≡head: ⊃tail
 
-    T.Symbol 'quasiquote'≡head: ⍺{
+    S 'quasiquote'≡head: ⍺{
       qq←{
         L S V←T.(List Symbol Vec)
         ~isCons ⍵:                    L ((S 'quote') ⍵)
@@ -190,7 +184,7 @@
       ⍺eval x
     }⍵
 
-    T.Symbol 'macroexpand-internal'≡head: ⍺macroexpand⍣≡⊃tail
+    S 'macroexpand-internal'≡head: ⍺macroexpand⍣≡⊃tail
 
     prepareEnv←{
       F A←⍺ ⍵
@@ -198,7 +192,7 @@
       P←2⊃F.params
       (_ x) y←¯2↑P
       V←1+x≡,'&'                              ⍝ varargs?
-      L←core.list (⊂T.Symbol 'list')∘,        ⍝ enclose args in (list ...)
+      L←core.list (⊂S 'list')∘,        ⍝ enclose args in (list ...)
       P←V⊃P ((¯2↓P),⊂y)                       ⍝ param names
       A←V⊃A (((¯1+⍴P)↑⍬,A),⊂T.List ((¯1+⍴P)↓⍬,A)) ⍝ actual args
       bs←{⍺⍵}/(⍪P),(⍪A)                       ⍝ list of pairs
@@ -207,7 +201,7 @@
       newEnv
     }
 
-    T.Symbol 'apply-internal'≡head: ⍺{
+    S 'apply-internal'≡head: ⍺{
       ty F←⊃A
       A←1↓A
       A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument

@@ -79,8 +79,8 @@
   EX⍪←(butlast←{T.butlast⊃⍵})                                    ∆ 'butlast'
   nth←{
     i←1+2⊃2⊃⍵
-    i>≢2⊃⍵: indexError i
-    ⊃i T.nth (concat (⊃⍵) (L (i⍴⊂nil)))
+   (i<1)∨i>≢2⊃⊃⍵: indexError (N (¯1+i))
+    ⊃i T.nth ⊃⍵
   }
   EX⍪←nth                                                        ∆ 'nth'
   ⍝ Atoms

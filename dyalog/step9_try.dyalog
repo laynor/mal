@@ -84,7 +84,7 @@
     S≡⊃form: ⍺{
       ':'=⊃2⊃form: form         ⍝ keywords
       (2⊃form) Env.in ⍺: ⍺envget form
-      nameError 2⊃form
+      nameError form
     }⍬
 
     V M∊⍨⊃form: (⊃form) (⍺∘eval¨SE 2⊃form)  ⍝ Vectors
@@ -183,11 +183,15 @@
       newEnv eval f.exp
     }⍵
 
-    S 'try'≡head: ⍺{
+    S 'try*'≡head: ⍺{
       body catch←tail
       100::⍺{
-        _ expr←2⊃2⊃catch
-        ⍺eval expr
+        _ (t name) expr←2⊃catch
+        t≠S: typeError S (t name) ⍝ FIXME: try catch loop!
+        e←Env.new⍺
+        err←read ⎕dmx.EM
+        _←(name Env.def err) e
+        e eval expr
       }⍵
       ⍺eval body
     }⍵
@@ -206,7 +210,7 @@
   }
 
   rep←{
-    100:: ⎕dmx.EM
+    100::'ERROR: ', print read ⎕dmx.EM
     P.print_readably ⍺ eval read ⍵
   }
 

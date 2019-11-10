@@ -2,8 +2,8 @@
 ID         : Mal, Version=1.0
 Description: Built Mal workspace
 Defaults   : ⎕IO←⎕ML←1
-TARGET     : Distribution/step8_macros
+TARGET     : Distribution/step9_try
 
-NS    : step8_macros.dyalog, Target=#
+NS    : step9_try.dyalog, Target=#
 
 LX    : m.mapl

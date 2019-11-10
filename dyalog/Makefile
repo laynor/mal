@@ -8,7 +8,8 @@ SRCS = step0_repl.dyalogbuild \
        step5_tco.dyalogbuild \
        step6_file.dyalogbuild \
        step7_quote.dyalogbuild \
-       step8_macros.dyalogbuild
+       step8_macros.dyalogbuild \
+       step9_try.dyalogbuild
 BINS = $(SRCS:%.dyalogbuild=Distribution/%.dws)
 SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 

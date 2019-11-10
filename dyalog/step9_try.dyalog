@@ -106,7 +106,7 @@
     S 'defmacro!'≡head: ⍺{
       name mFn←tail
       t v←val←⍺ eval mFn
-      t≢T.Function: T.Function E.ty val
+      t≢T.Function: typeError T.Function val
       v.isMacro←1
       _←(((2⊃name) Env.def val) ⍺)
       val
@@ -166,17 +166,31 @@
     ⍝ concatenazione di funzioni applicato a operatore per creare vettore di namespace
 
     S 'apply-internal'≡head: ⍺{
-      A (ty F)←(1∘↑,(⊂1∘↓))tail
-      A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
+      (t f) A←⍺eval¨tail           ⍝ Here A contains a mal list containing all the arguments given to apply. The last element of this list is a list.
+      ⍝ ⎕←f A ⎕
+      last←2⊃⊃¯1↑2⊃A
+      butlast←¯1↓2⊃A
+      A←butlast,last
+      ⍝ A←⍺∘eval¨SE tail
+      ⍝ (ty F) A←(1∘↑,(⊂1∘↓))A
+      ⍝ A←(¯1↓A),2⊃⊃¯1↑A          ⍝ concatenate to last argument
 
-      ~ty∊T.Function T.Builtin: T.Function T.Builtin E.ty ty F
+      ~t∊T.Function T.Builtin: typeError (T.Function T.Builtin) (t F)
 
-      ty=T.Builtin: ⍺ F.call A
+      t=T.Builtin: ⍺ f.call A
 
-      newEnv←F prepareEnv A
-      newEnv eval F.exp
+      newEnv←f prepareEnv A
+      newEnv eval f.exp
     }⍵
 
+    S 'try'≡head: ⍺{
+      body catch←tail
+      100::⍺{
+        _ expr←2⊃2⊃catch
+        ⍺eval expr
+      }⍵
+      ⍺eval body
+    }⍵
 
     (ty F)←⍺ eval head
     A←⍺∘eval¨SE tail
@@ -185,7 +199,7 @@
     ty=T.Builtin: ⍺ F.call A
 
     ⍝ Type error when non callable
-    ty≠T.Function: T.Function T.Builtin E.ty ty F
+    ty≠T.Function: typeError (T.Function T.Builtin) (ty F)
 
     newEnv←F prepareEnv A
     newEnv eval F.exp

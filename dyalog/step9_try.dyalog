@@ -15,7 +15,7 @@
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: do not execute when empty vector
   C core Env E P R T←#.(Chars core Env Errors Printer Reader Types)
 
-  L V M S Str←T.(List Vec Map Symbol String)
+  L V M S Str K←T.(List Vec Map Symbol String Keyword)
 
   ARGV←⍬
 
@@ -81,8 +81,9 @@
 
     form←⍺macroexpand⍵
 
+    K≡⊃form: form
+
     S≡⊃form: ⍺{
-      ':'=⊃2⊃form: form         ⍝ keywords
       (2⊃form) Env.in ⍺: ⍺envget form
       nameError form
     }⍬
@@ -184,6 +185,7 @@
     }⍵
 
     S 'try*'≡head: ⍺{
+      1=≢tail: ⍺eval⊃tail
       body catch←tail
       100::⍺{
         _ (t name) expr←2⊃catch

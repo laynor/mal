@@ -11,6 +11,7 @@
    Special←'⋄'
    String←'S'
    Symbol←'⍺'
+   Keyword←':'
    Vec←'V'
 
    true←Bool 1
@@ -37,14 +38,29 @@
    eq←{
      eqLst←{
        (≢⍺)≠≢⍵: 0
+       0=≢⍺: 1
        ∧/eq/(⍪⍺),⍪⍵
      }
      ty1 v1←⍺
      ty2 v2←⍵
      ∧/ty1 ty2∊List Vec: (0,v1) eqLst (0,v2)
-     ∧/ty1 ty2=Map:       v1 eqLst v2
+     ∧/ty1 ty2=Map:       (,v1[⍋v1;]) eqLst (,v2[⍋v2;])
                           ⍺≡⍵
    }
+
+   emptyMap←Map (0 2⍴⊂(Number 0) )
+   mapGet←{2⊃(2⊃⍵)[⊃⍸⍺∘ eq¨ (2⊃⍵)[;1];]}
+   dissoc←{Map ((2⊃⍵)[(~⍺∘ eq¨ tb[;1])/⍳⊃⍴tb;]⊣tb←2⊃⍵)}
+   assoc←{
+     m←2⊃⍺
+     m←(((0.5×⍴⍵),2)⍴⍵)⍪m
+     Map (m[m[;1]⍳∪m[;1];])
+   }
+   mapIn←{∨/⍺∘ eq¨ (2⊃⍵)[;1]}
+   keys←{(2⊃⍵)[;1]}
+
+   m←emptyMap assoc (Number 1) (String 'a')   (Number 2) (String 'b')
+   m←m assoc        (Number 3) (String 'c')   (Number 4) (String 'd')
 
    ATOMS←⍬
 

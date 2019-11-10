@@ -23,6 +23,7 @@
     ⍵≡T.Special:  'Invalid'
     ⍵≡T.String:   'String'
     ⍵≡T.Symbol:   'Symbol'
+    ⍵≡T.Keyword:  'Keyword'
     ⍵≡T.Bool:     'Bool'
     ⍵≡T.Vec:      'Vec'
     ⍵≡T.Atom:     'Atom'
@@ -33,11 +34,12 @@
   print_readably←{
     t v←⍵
     t≡T.Number: ('¯'⎕r'-')trim⍕v
-    t≡T.Symbol: v
+    t≡T.Symbol:  v
+    t≡T.Keyword: v
     t≡T.String: '"',(unescape v),'"'
     t≡T.List:   '(',(trim⍕print_readably¨ v),')'
     t≡T.Vec:    '[',(trim⍕print_readably¨ v),']'
-    t≡T.Map:    '{',(trim⍕print_readably¨ v),'}'
+    t≡T.Map:    '{',(trim⍕print_readably¨,v),'}'
     t≡T.Builtin: '#<Builtin ',(⍕v),'>'
     t≡T.Function: '#<', ('Funciton' 'Macro'⊃⍨1+v.isMacro),' ',(⍕v),'>'
     t≡T.Atom: '(atom ',(print_readably T.deref ⍵),')'
@@ -50,13 +52,11 @@
   print←{
     t v←⍵
     t≡T.String: v
+    t≡T.Keyword: v
     t≡T.List:   '(',(trim⍕print¨ v),')'
     t≡T.Vec:    '[',(trim⍕print¨ v),']'
-    t≡T.Map:    '{',(trim⍕print¨ v),'}'
+    t≡T.Map:    '{',(trim⍕print¨,v),'}'
     print_readably ⍵
   }
-
-
-  pprint←print
 
 :EndNamespace

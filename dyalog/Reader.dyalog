@@ -185,7 +185,7 @@
    tok←       WS or COMMENT or COMMA or TRUE or FALSE
    tok←tok or (T.Special map SPECIAL)
    tok←tok or ((T.Number,toInt) map INT)
-   tok←tok or (T.Symbol map SYM)
+   tok←tok or ({((1+':'=⊃⍵)⊃T.(Symbol Keyword)) ⍵} map SYM)
    tok←tok or (T.String map STRING)
 
    tokens←(~isWSOrComment) flt map (tok many)
@@ -195,6 +195,7 @@
    Bool←T.Bool∘tt
    Num←T.Number∘tt
    Sym←T.Symbol∘tt
+   Key←T.Keyword∘tt
    isSpecial←{ty val←⍺ ⋄ (ty=T.Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
    Spec←{(isSpecial∘⍺⍺)∆t ⍵}
 
@@ -205,7 +206,7 @@
 
    List←{T.List map ('()' hDelim ⍺⍺) ⍵}
    Vec←{T.Vec map ('[]' hDelim ⍺⍺) ⍵}
-   Map←{T.Map map ('{}' hDelim ⍺⍺) ⍵}
+   Map←{{T.emptyMap T.assoc ⍵} map ('{}' hDelim ⍺⍺) ⍵}
 
    mkFnAppl←{T.List ((⊂T.Symbol ⍺),⍵)}
 
@@ -227,7 +228,7 @@
    WithMeta←{{T.List ((⊂T.Symbol 'with-meta'),⌽1↓⍵)} map ('^' Spec seq ⍺⍺ sq ⍺⍺) ⍵}
 
    Form←{
-     p←Bool or Num or Sym or String
+     p←Bool or Num or Sym or Key or String
      p←p or (∇ List)  or (∇ Vec)        or (∇ Map)
      p←p or (∇ Quote) or (∇ Quasiquote) or (∇ UnquoteOrSpliceUnquote)
      p←p or (∇ Deref) or (∇WithMeta)

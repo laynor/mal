@@ -22,3 +22,8 @@
 
 (def! dedicated-to
     (fn* () (println "Dedicated to Saya. Love you forever <3")))
+
+(def! map (fn* [f lst]
+               (if (empty? lst)
+                   ()
+                   (cons (f (first lst)) (map f (rest lst))))))

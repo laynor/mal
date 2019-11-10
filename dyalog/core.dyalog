@@ -5,8 +5,8 @@
 :Require file://Types.dyalog
 :Namespace core
   C E Env P R T←#.(Chars Errors Env Printer Reader Types)
-  N S Str L V B nil empty←T.(Number Symbol String List Vec Bool nil empty)
-
+  N S K Str L V M B←T.(Number Symbol Keyword String List Vec Map Bool)
+  nil empty true false←T.(nil empty true false)
   ⍝ Export mechanism and syntax.
   ⍝ Syntactically, the file appears like a table: exported functions and
   ⍝ values on the left, name with wich they appear in the mal env on the
@@ -51,7 +51,16 @@
   EX⍪←(lte←≤RFn)                                                 ∆ '<='
 
   ⍝ Symbols
-  EX⍪←(isSymbol←{T.bool S=⊃⊃⍵})                                   ∆ 'symbol?'
+  EX⍪←(isSymbol←{T.bool S=⊃⊃⍵})                                  ∆ 'symbol?'
+  EX⍪←(symbol←{S(2⊃⊃⍵)})                                         ∆ 'symbol'
+
+  ⍝ Keywords
+  EX⍪←(isKeyword←{T.bool K=⊃⊃⍵})                                 ∆ 'keyword?'
+  EX⍪←(keyword←{K (((~':'=⊃name)⍴':'),name) ⊣ name←2⊃⊃⍵})        ∆ 'keyword'
+
+  EX⍪←(isNil←{T.bool nil≡⊃⍵})                                    ∆ 'nil?'
+  EX⍪←(isTrue←{T.bool true≡⊃⍵})                                  ∆ 'true?'
+  EX⍪←(isFalse←{T.bool false≡⊃⍵})                                ∆ 'false?'
 
   ⍝ strings
   EX⍪←(str←{Str (⊃,/P.print¨⍵)})                                 ∆ 'str'
@@ -59,14 +68,16 @@
 
   ⍝ I/O
   EX⍪←(prn←{⍞←(¯1↓⊃,/{(P.print_readably⍵),' '}¨⍵),C.LF ⋄ nil})   ∆ 'prn'
-  EX⍪←(println←{⍞←(¯1↓⊃,/{(P.print⍵),' '}¨⍵),C.LF ⋄ nil})      ∆ 'println'
+  EX⍪←(println←{⍞←(¯1↓⊃,/{(P.print⍵),' '}¨⍵),C.LF ⋄ nil})        ∆ 'println'
   EX⍪←(slurp←{Str (⊃⎕nget 2⊃⊃⍵)})                                ∆ 'slurp'
 
   ⍝ Sexps
   EX⍪←(readString←{R.read 2⊃⊃⍵})                                 ∆ 'read-string'
 
   ⍝ seqs
-  EX⍪←(vec←{V,⊂⍵})                                               ∆ 'vec'
+  EX⍪←(isSequential←{T.bool L V∊⍨⊃⊃⍵})                           ∆ 'sequential?'
+  EX⍪←(isVec←{T.bool V=⊃⊃⍵})                                     ∆ 'vector?'
+  EX⍪←(vec←{V,⊂⍵})                                               ∆ 'vector'
   EX⍪←(list←{L,⊂⍵})                                              ∆ 'list'
   EX⍪←(first←{T.car⊃⍵})                                          ∆ 'first'
   EX⍪←(rest←{T.cdr⊃⍵})                                           ∆ 'rest'
@@ -83,6 +94,22 @@
     ⊃i T.nth ⊃⍵
   }
   EX⍪←nth                                                        ∆ 'nth'
+
+  ⍝ Map
+  EX⍪←(assoc←{(⊃⍵)T.assoc 1↓⍵})                                  ∆ 'assoc'
+  EX⍪←(dissoc←{⊃T.dissoc/⌽⍵})                                 ∆ 'dissoc'
+  get←{
+    3:: nil
+    nil≡⊃⍵: nil
+    (2⊃⍵)T.mapGet⊃⍵
+  }
+  EX⍪←get                                                        ∆ 'get'
+  EX⍪←(hashMap←{assoc (⊂T.emptyMap),⍵})                          ∆ 'hash-map'
+  EX⍪←(isMap←{T.bool M=⊃⊃⍵})                                     ∆ 'map?'
+  EX⍪←(contains←{T.bool (2⊃⍵)T.mapIn⊃⍵})                         ∆ 'contains?'
+  EX⍪←(keys←{L ((2⊃⊃⍵)[;1])})                                    ∆ 'keys'
+  EX⍪←(vals←{L ((2⊃⊃⍵)[;2])})                                    ∆ 'vals'
+
   ⍝ Atoms
   EX⍪←(atom←{T.newAtom⊃⍵})                                       ∆ 'atom'
   EX⍪←(isAtom←{T.bool T.Atom≡⊃⊃⍵})                               ∆ 'atom?'

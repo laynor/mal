@@ -1,13 +1,14 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
-:Require file://C.dyalog
+:Require file://Chars.dyalog
 :Namespace m
-  T←#.T
+  #.T←#.Types
+  T←#.Types
   Env←#.Env
-  C←#.C
+  C←#.Chars
   ARGV←⍬
 
   :Namespace E
@@ -263,7 +264,7 @@
     newEnv eval F.exp
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
   ∇R←env rep input
    :Trap 100

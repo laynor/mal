@@ -1,10 +1,10 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
 :Namespace m
-  T←#.T
+  T←#.Types
   Env←#.Env
 
   :Namespace E
@@ -24,17 +24,18 @@
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.Number (⍺⍺ (⊃1∘↓)¨⍵)
-                  #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
+    nonNumber←(T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: T.Number (⍺⍺ (⊃1∘↓)¨⍵)
+                  T.Number #.m.E.ty (⊃nonNumber⊃⍵)
   }
 
-  defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
+  defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
   defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
   defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
+  GLOBAL←1
   mkBaseEnv←{
-    e←('+' defOp (+/))   Env.empty
+    e←('+' defOp (+/))   GLOBAL
     e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
     e←('*' defOp (×/))           e
     e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
@@ -68,7 +69,7 @@
     eval←⍺⍺
     env←⍺
     (ty val) env1←env eval farg
-    T.Function≠ty: (T.Error 'Type error') env1
+    T.Builtin≠ty: (T.Error 'Type error') env1
     {
       args env2←env1 (eval vEach) args
       env2 val.call args
@@ -77,9 +78,10 @@
 
   ⍝ env (eval evBinding) (name form)
   evBinding←{
-    name form←⍺
-    val env1←⍵ ⍺⍺ form
-    (((2⊃name) Env.def val) env1)
+    name form←⍵
+    evEnv destEnv←⍺
+    val env←evEnv ⍺⍺ form
+    ((2⊃name) Env.def val) destEnv
   }
 
   ∇throw error
@@ -90,22 +92,21 @@
   evDef←{
     name form←⍵
     val env1←⍺ ⍺⍺ form
-    env2←(((2⊃name) Env.def val) env1)
-    ⍝ ⎕←env2
-    val env2
+    _←((2⊃name) Env.def val) ⍺
+    val ⍺
   }
 
 
+  SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: return argument if emtpy
   ⍝ TODO type check names
   evLet←{
     eval←⍺⍺
     (_ bs) exp←⍵                ⍝ TODO check type!
-    bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
-    env←Env.empty,⍺
-    ⍝ Evaluate bindings
-    env←⊃(eval evBinding)/(⌽bs),⊂env
-    res _←env ⍺⍺ exp
-    res ⍺
+
+    bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)     ⍝ group by 2
+    env←Env.new⍺
+    _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
+    env eval exp
   }
 
   evLst←{
@@ -120,11 +121,11 @@
     ty←⊃⍵
     ty≡T.Number: ⍵ ⍺
     ty≡T.String: ⍵ ⍺
-    ty≡T.Function: ⍵ ⍺
+    ty≡T.Builtin: ⍵ ⍺
     ty≡T.Error: ⍵ ⍺
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃⍵: ⍵ ⍺             ⍝ keywords
-      (2⊃⍵) Env.in ⍺: (⍺Env.get(2⊃⍵)) ⍺
+      (2⊃⍵) Env.in ⍺: (⍺Env.get 2⊃⍵) ⍺
       throw E.nameError 2⊃⍵
     }⍵
     ty≡T.Vec: ⍺{
@@ -132,20 +133,20 @@
       (T.Vec vs) env
     }⍵
     ty≡T.Map: ⍺{
-      vs env←(⍺(eval vEach)2⊃⍵)
-      (T.Map vs) env
+      vs env←(⍺(eval vEach),2⊃⍵)
+      (T.Map (((0.5×⍴vs),2)⍴vs)) env
     }⍵
     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evLst)⍵
     (ty≡T.List): ⍵ ⍺
     throw (⍕'Unknown type' ty)
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
 
   ∇R←env rep input
    :Trap 100
-     v newEnv←env eval read input
+     v newEnv←GLOBAL eval read input
      print v
      R←v newEnv
    :Case 100
@@ -162,7 +163,7 @@
      inp←(≢prompt)↓⍞
      →(inp≡'')/out
      →(inp≡'(exit)')/out
-     res newEnv←env rep inp
+     res newEnv←GLOBAL rep inp
      ⍝ ⍞←res
      ⍞←⎕ucs 10
 

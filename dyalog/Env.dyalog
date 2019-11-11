@@ -76,5 +76,4 @@
 
   call←{f←⍺⍺ get ⍵⍵ ⋄ ⍵⍵ f.call ⍵}
 
-
 :EndNamespace

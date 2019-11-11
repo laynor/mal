@@ -4,6 +4,8 @@
 :Require file://Reader.dyalog
 :Require file://Types.dyalog
 :Namespace core
+  _←'days'⎕cy'dfns'
+
   C E Env P R T←#.(Chars Errors Env Printer Reader Types)
   N S K Str L V M B Fun BFun←T.(Number Symbol Keyword String List Vec Map Bool Function Builtin)
   nil empty true false←T.(nil empty true false)
@@ -101,6 +103,15 @@
   EX⍪←(readString←{R.read 2⊃⊃⍵})                                 ∆ 'read-string'
 
   ⍝ seqs
+  seq←{
+    nil≡⊃⍵:     nil
+    ~(⊃⊃⍵)∊L V Str: typeError (L V) ⊃⊃⍵
+    0=≢2⊃⊃⍵:      nil
+    Str≡⊃⊃⍵:    L ({Str⍵}¨(2⊃⊃⍵))
+    V≡⊃⊃⍵:      L (2⊃⊃⍵)
+    ⊃⍵
+  }
+  EX⍪←seq                                                        ∆ 'seq'
   EX⍪←(vec←{V,⊂⍵})                                               ∆ 'vector'
   EX⍪←(list←{L,⊂⍵})                                              ∆ 'list'
   EX⍪←(first←{T.car⊃⍵})                                          ∆ 'first'
@@ -108,13 +119,13 @@
   EX⍪←(isEmpty←{ty v←2↑⊃⍵ ⋄ T.bool (ty∊L V)∧(0=≢v)})             ∆ 'empty?'
   EX⍪←(cons←{(⊃⍵)T.cons 2⊃⍵})                                    ∆ 'cons'
   conj←{
-    L≡⊃⊃⍵: L ((1↓⍵),2⊃⊃⍵)
+    L≡⊃⊃⍵: L ((⌽1↓⍵),2⊃⊃⍵)
     V≡⊃⊃⍵: V ((2⊃⊃⍵), 1↓⍵)
     typeError (L V) (⊃⍵)
   }
   EX⍪←conj                                                       ∆ 'conj'
   EX⍪←(concat←{list⊃,/2∘⊃¨#.m.SE ⍵})                             ∆ 'concat'
-  EX⍪←(count←{(2-nil≡⊃⍵)⊃(N 0) (N,≢2⊃⊃⍵)})                   ∆ 'count'
+  EX⍪←(count←{(2-nil≡⊃⍵)⊃(N 0) (N,≢2⊃⊃⍵)})                       ∆ 'count'
   EX⍪←(last←{T.last⊃⍵})                                          ∆ 'last'
   EX⍪←(butlast←{T.butlast⊃⍵})                                    ∆ 'butlast'
   nth←{
@@ -126,7 +137,7 @@
 
   ⍝ Map
   EX⍪←(assoc←{(⊃⍵)T.assoc 1↓⍵})                                  ∆ 'assoc'
-  EX⍪←(dissoc←{⊃T.dissoc/⌽⍵})                                 ∆ 'dissoc'
+  EX⍪←(dissoc←{⊃T.dissoc/⌽⍵})                                    ∆ 'dissoc'
   get←{
     3:: nil
     nil≡⊃⍵: nil
@@ -144,12 +155,17 @@
   EX⍪←(reset←{(⊃⍵) T.set (2⊃⍵)})                                 ∆ 'reset!'
 
   ⍝ Meta data
-  EX⍪←(withMeta←{(2↑⊃⍵),⊂2⊃⍵})                                    ∆ 'with-meta'
+  EX⍪←(withMeta←{(2↑⊃⍵),⊂2⊃⍵})                                   ∆ 'with-meta'
   EX⍪←(meta←{3⊃(⊃⍵),⊂nil})                                       ∆ 'meta'
 
 
 
   EX⍪←(throw←{E.throw ⊃⍵})                                       ∆ 'throw'
-
+  timeMs←{
+    ⍝ Stack overflowed this one
+    O←{(⍺⍺ ⍺)⍵⍵ ⍺⍺ ⍵} ⍝ The over operator
+    N,86400×⎕TS days O - 1970 1 1
+  }
+  EX⍪←timeMs                                                     ∆ 'time-ms'
   EXPORTS←EX
 :EndNamespace

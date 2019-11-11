@@ -37,8 +37,14 @@
      - P skip :: apply P but return an empty array. Yet unwieldy.
      - flat :: Yet unwieldy. should be the tool of choice to flatten out
                sequences or many/some
-
-
+** Issues:
+   Leaks memory, very very much. Environments (and atoms) are kept forever once they are created.
+   This means whenever a /let/ or /(some-function ...)/ form is evaluated.
+*** Possible solution
+    Marking envs as dirty.
+    Adopt a naive solution at first, refine later.
+    - Most naive: when evaluating a fn* form, mark the env as dirty. Never unmark.
+    Incrementally cleanup as some garbage collection is done.
 ** Requirements
   Dyalog APL. I'm using the last version (17.1), do not know if it works with any other version
   rlwrap

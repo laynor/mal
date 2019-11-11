@@ -34,8 +34,7 @@
 
   SE←{0=≢⍵: ⍵ ⋄ ⍺⍺ ⍵}           ⍝ safe each: return argument if emtpy
 
-  EX←nil                                                         D 'nil'
-  EX⍪←(eq←{B,⊃∧/2 T.eq/⍵})                                       ∆ '='
+  EX ←(eq←{B,⊃∧/2 T.eq/⍵})                                       ∆ '='
 
   ⍝ Type predicates
   EX⍪←(isNumber←{T.bool N=⊃⊃⍵})                                  ∆ 'number?'

@@ -164,6 +164,7 @@
    SYM←∊map ((DIGIT many) seq SYMCHAR_NOT_DIGIT sq (SYMCHAR many))
    TRUE←{T.Bool 1} map ('true'str)
    FALSE←{T.Bool 0} map ('false'str)
+   NIL←{T.nil} map ('nil'str)
 
    SPECIAL←∊∘specialChars ∆t
 
@@ -182,7 +183,7 @@
    tokType←⊃
    tokVal←{1↑1↓⍵}
 
-   tok←       WS or COMMENT or COMMA or TRUE or FALSE
+   tok←       WS or COMMENT or COMMA or TRUE or FALSE or NIL
    tok←tok or (T.Special map SPECIAL)
    tok←tok or ((T.Number,toInt) map INT)
    tok←tok or ({((1+':'=⊃⍵)⊃T.(Symbol Keyword)) ⍵} map SYM)
@@ -196,6 +197,7 @@
    Num←T.Number∘tt
    Sym←T.Symbol∘tt
    Key←T.Keyword∘tt
+   Nil←T.Nil∘tt
    isSpecial←{ty val←⍺ ⋄ (ty=T.Special)∧(val≡⍵)} ⍝ Ex: (Special '~') isSpecial '~' <--> 1
    Spec←{(isSpecial∘⍺⍺)∆t ⍵}
 
@@ -228,7 +230,7 @@
    WithMeta←{{T.List ((⊂T.Symbol 'with-meta'),⌽1↓⍵)} map ('^' Spec seq ⍺⍺ sq ⍺⍺) ⍵}
 
    Form←{
-     p←Bool or Num or Sym or Key or String
+     p←Bool or Num or Nil or Sym or Key or String
      p←p or (∇ List)  or (∇ Vec)        or (∇ Map)
      p←p or (∇ Quote) or (∇ Quasiquote) or (∇ UnquoteOrSpliceUnquote)
      p←p or (∇ Deref) or (∇WithMeta)

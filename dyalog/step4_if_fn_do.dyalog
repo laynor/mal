@@ -1,20 +1,21 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
-:Require file://C.dyalog
+:Require file://Chars.dyalog
 :Namespace m
-  T←#.T
+  Printer←#.Printer
+  T←#.Types
   Env←#.Env
-  C←#.C
+  C←#.Chars
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
 
     ty←{
       msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
-      #.T.Error msg
+      T.Error msg
     }
   :EndNamespace
 
@@ -23,19 +24,19 @@
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    N←#.T.Number
+    N←T.Number
     nonNumber←(N=⊃¨⍵)⍳0
     nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
                   N #.m.E.ty (⊃nonNumber⊃⍵)
   }
 
   mkRelFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
+    nonNumber←(T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
+    T.Number #.m.E.ty (⊃nonNumber⊃⍵)
   }
 
-  defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
+  defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
   defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
   defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
@@ -59,7 +60,7 @@
   eq←{
     eqLst←{
       (≢⍺)≠≢⍵: 0
-      ∧/#.m.eq/(⍪⍺),⍪⍵
+      ∧/eq/(⍪⍺),⍪⍵
     }
     ty1 v1←⍺
     ty2 v2←⍵
@@ -79,21 +80,21 @@
     _←('<'       defRelOp {∧/ 2</⍵}) e
     _←('<='      defRelOp {∧/ 2≤/⍵}) e
     _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list?'   defn     {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'     defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('='       defn     {T.bool ⊃∧/ 2 eq/⍵}) e
+    _←('list'    defn     {lst.list ⍵}) e
+    _←('list'    defn     {lst.list ⍵}) e
+    _←('list?'   defn     {T.bool T.List=⊃⊃⍵}) e
+    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊T.List T.Vec)∧(0=≢v)}) e
+    _←('str'     defn     {T.String (⊃,/Printer.print¨⍵)})e
+    _←('pr-str'  defn     {T.String (¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'     defn     {⎕←(¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵) ⋄ T.nil})e
+    _←('println' defn     {⎕←(¯1↓⊃,/{(Printer.print⍵),' '}¨⍵) ⋄ T.nil})e
     _←('count'   defn     {
       ty v←⊃⍵
-      #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
-                           #.T.Number (≢v)
+      T.nil≡⊃⍵: T.Number 0
+                T.Number (≢v)
     })e
-    _←('envs' defn  {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs' defn  {⎕←Env.ENV ⋄ T.nil}) e
     GLOBAL
   }
 
@@ -103,15 +104,16 @@
     F←lst.car ⍵
     A←2⊃lst.cdr ⍵
     (ty f)←⍺ ⍺⍺ F
-    T.Function≠ty: (T.Error 'Type error') ⍺
+    T.Builtin≠ty: (T.Error 'Type error') ⍺
     ⍺ f.call ⍺∘⍺⍺¨A
   }
 
   ⍝ env (eval evBinding) (name form)
   evBinding←{
     name form←⍵
-    val←⍺ ⍺⍺ form
-    ((2⊃name) Env.def val) ⍺
+    evEnv destEnv←⍺
+    val←evEnv ⍺⍺ form
+    ((2⊃name) Env.def val) destEnv
   }
 
   ∇throw error
@@ -137,7 +139,7 @@
     ⍝ V←B[;2]                     ⍝ values
     bs←({⍺⍵}/(((⍴bs)÷2),2)⍴bs)  ⍝ group by 2
     env←Env.new⍺
-    _←(env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
+    _←(env env∘(eval evBinding))¨SE bs ⍝ Evaluate bindings
     env ⍺⍺ exp
   }
 
@@ -166,14 +168,13 @@
       (_ x) y←¯2↑P
       V←(1+x≡,'&')              ⍝ varargs?
       P←V⊃P ((¯2↓P),⊂y)         ⍝ param names
-      A←V⊃⍵ (((¯1+⍴P)↑⍵),⊂#.m.lst.list (⊂#.T.Symbol 'list'),(¯1+⍴P)↓⍵) ⍝ actual args
+      A←V⊃⍵ (((¯1+⍴P)↑⍵),⊂lst.list (⊂T.Symbol 'list'),(¯1+⍴P)↓⍵) ⍝ actual args
       bs←{⍺⍵}/(⍪P),(⍪A)
       env←Env.new D.env
-      _←env∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
-      val←env eval D.exp
-      val
+      _←⍺ env∘(eval evBinding)¨SE bs ⍝ Evaluate bindings
+      env eval D.exp
     }
-    fn #.T.mkFn⍬
+    fn T.mkBuiltin ⍺
   }
 
   evLst←{
@@ -205,7 +206,7 @@
     ⍵
   }
 
-  print←##.Printer.pprint
+  print←Printer.print_readably
 
 
   ∇R←env rep input

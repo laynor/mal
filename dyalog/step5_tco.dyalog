@@ -1,41 +1,42 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
-:Require file://C.dyalog
+:Require file://Chars.dyalog
 :Namespace m
-  T←#.T
+  Printer←#.Printer
+  T←#.Types
   Env←#.Env
-  C←#.C
+  C←#.Chars
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
 
     ty←{
-      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
-      #.T.Error msg
+      msg←('Type Error: expected ', (T.typeName ⍺), ', found ', T.typeName ⍵)
+      T.Error msg
     }
   :EndNamespace
 
 
-  read←##.Reader.read
+  read←#.Reader.read
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    N←#.T.Number
+    N←T.Number
     nonNumber←(N=⊃¨⍵)⍳0
     nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-                  N #.m.E.ty (⊃nonNumber⊃⍵)
+                  N E.ty (⊃nonNumber⊃⍵)
   }
 
   mkRelFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Number #.m.E.ty (⊃nonNumber⊃⍵)
+    nonNumber←(T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
+    T.Number E.ty (⊃nonNumber⊃⍵)
   }
 
-  defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
+  defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
   defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
   defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
@@ -79,21 +80,21 @@
     _←('<'       defRelOp {∧/ 2</⍵}) e
     _←('<='      defRelOp {∧/ 2≤/⍵}) e
     _←('>='      defRelOp {∧/ 2≥/⍵}) e
-    _←('='       defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list'    defn     {#.m.lst.list ⍵}) e
-    _←('list?'   defn     {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'     defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'  defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'     defn     {⎕←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵) ⋄ #.T.nil})e
-    _←('println' defn     {⎕←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵) ⋄ #.T.nil})e
+    _←('='       defn     {T.bool ⊃∧/ 2 eq/⍵}) e
+    _←('list'    defn     {lst.list ⍵}) e
+    _←('list'    defn     {lst.list ⍵}) e
+    _←('list?'   defn     {T.bool T.List=⊃⊃⍵}) e
+    _←('empty?'  defn     {ty v←⊃⍵ ⋄ T.bool (ty∊T.List T.Vec)∧(0=≢v)}) e
+    _←('str'     defn     {T.String (⊃,/Printer.print¨⍵)})e
+    _←('pr-str'  defn     {T.String (¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'     defn     {⎕←(¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵) ⋄ T.nil})e
+    _←('println' defn     {⎕←(¯1↓⊃,/{(Printer.print⍵),' '}¨⍵) ⋄ T.nil})e
     _←('count'   defn     {
       ty v←⊃⍵
-      #.T.Symbol 'nil'≡⊃⍵: #.T.Number 0
-                           #.T.Number (≢v)
+      T.Symbol 'nil'≡⊃⍵: T.Number 0
+                           T.Number (≢v)
     })e
-    _←('envs' defn  {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs' defn  {⎕←#.Env.ENV ⋄ T.nil}) e
     GLOBAL
   }
 
@@ -139,6 +140,7 @@
     F.params←params
     F.env←env
     F.exp←exp
+    F.isMacro←0
 
     T.Function F
   }
@@ -208,7 +210,7 @@
     newEnv eval F.exp
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
   ∇R←env rep input
    :Trap 100

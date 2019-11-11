@@ -1,10 +1,10 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
 :Namespace m
-  T←##.T
+  T←##.Types
   Env←##.Env
 
   read←##.Reader.read
@@ -13,7 +13,7 @@
 
   allNumbers←{∧/⊃¨T.Number=⍵}
   mkNumFn←{
-    allNumbers ⍵: T.Number (⍺⍺ (⊃1∘↓)¨⍵)
+    #.m.allNumbers ⍵: T.Number (⍺⍺ (⊃1∘↓)¨⍵)
     Error ⊂'Type Error'
   }
 
@@ -21,8 +21,9 @@
   defnp←{(⍺⍺ defn (⍵⍵ mkPureFn)) ⍵}
   defOp←{(⍺⍺ defnp (⍵⍵ mkNumFn)) ⍵}
 
+  GLOBAL←1
   mkBaseEnv←{
-    e←('+' defOp (+/))          ⍬
+    e←('+' defOp (+/))          GLOBAL
     e←('-' defOp (⊃1∘↑-(+/1∘↓))) e
     e←('*' defOp (×/))          e
     e←('/' defOp (⊃1∘↑÷(×/1∘↓))) e
@@ -50,7 +51,7 @@
     eval←⍺⍺
     env←⍺
     (ty val) env1←env eval farg
-    T.Function≠ty: (T.Error 'Type error') env1
+    T.Builtin≠ty: (T.Error 'Type error') env1
     {
       args env2←env1 (eval vEach) args
       env2 val.call args
@@ -61,11 +62,12 @@
     ty←⊃⍵
     ty≡T.Number: ⍵ ⍺
     ty≡T.String: ⍵ ⍺
-    ty≡T.Function: ⍵ ⍺
+    ty≡T.Builtin: ⍵ ⍺
     ty≡T.Error: ⍵ ⍺
+    ty≡T.Keyword: ⍵ ⍺
     ty≡T.Symbol: ⍺{
       ':'=⊃2⊃⍵: ⍵ ⍺            ⍝ keywords
-      (2⊃⍵) Env.in ⍺: ((2⊃⍵)Env.get⍺) ⍺
+      (2⊃⍵) Env.in ⍺: ((⍺Env.get 2⊃⍵)) ⍺
       (T.Error ('Name `',(2⊃⍵),''' is unbound.')) ⍺
     }⍵
     ty≡T.Vec: ⍺{
@@ -73,15 +75,15 @@
       (T.Vec vs) env
     }⍵
     ty≡T.Map: ⍺{
-      vs env←(⍺(eval vEach)2⊃⍵)
-      (T.Map vs) env
+      vs env←⍺(eval vEach),2⊃⍵
+      (T.Map (((0.5×⍴vs),2)⍴vs)) env
     }⍵
     (ty≡T.List)∧0<≢2⊃⍵: ⍺(∇evFn)⍵
     (ty≡T.List): ⍵ ⍺
     T.Error (⍕'Unknown type' ty)
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
   ∇R←env rep input
    v newEnv←env eval read input
@@ -97,7 +99,7 @@
      inp←(≢prompt)↓⍞
      →(inp≡'')/out
      →(inp≡'(exit)')/out
-     res newEnv←env rep inp
+     res newEnv←GLOBAL rep inp
      ⍝ ⍞←res
      ⍞←⎕ucs 10
 
@@ -105,6 +107,6 @@
      →0
    :EndTrap
   out:'Bye'
-   ⎕off
+   ⍝ ⎕off
   ∇
 :EndNamespace

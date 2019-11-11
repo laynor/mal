@@ -1,20 +1,21 @@
 :Require file://debug.dyalog
-:Require file://env.dyalog
+:Require file://Env.dyalog
 :Require file://Types.dyalog
 :Require file://Reader.dyalog
 :Require file://Printer.dyalog
-:Require file://C.dyalog
+:Require file://Chars.dyalog
 :Namespace m
-  T←#.T
+  Printer←#.Printer
+  T←#.Types
   Env←#.Env
-  C←#.C
+  C←#.Chars
   ARGV←⍬
 
   :Namespace E
     nameError←{'Name error: ''',⍵,''' not found.'}
 
     ty←{
-      msg←#.('Type Error: expected ', (T.typeName ⍺), ', found ', (⍕⍵), ':', (T.typeName ⊃⍵))
+      msg←##.('Type Error: expected ', (T.typeName ⍺), ', found ', (⍕⍵), ':', (T.typeName ⊃⍵))
       #.m.throw msg
     }
   :EndNamespace
@@ -24,19 +25,19 @@
 
   ⍝ Would really like to avoid having to fully qualify namespaces here
   mkNumFn←{
-    N←#.T.Number
+    N←T.Number
     nonNumber←(N=⊃¨⍵)⍳0
     nonNumber>⍴⍵: N (⍺⍺ (⊃1∘↓)¨⍵)
-                  N #.m.E.ty (nonNumber⊃⍵)
+                  N E.ty (nonNumber⊃⍵)
   }
 
   mkRelFn←{
-    nonNumber←(#.T.Number=⊃¨⍵)⍳0
-    nonNumber>⍴⍵: #.T.bool (⍺⍺ (⊃1∘↓)¨⍵)
-    #.T.Number #.m.E.ty (nonNumber⊃⍵)
+    nonNumber←(T.Number=⊃¨⍵)⍳0
+    nonNumber>⍴⍵: T.bool (⍺⍺ (⊃1∘↓)¨⍵)
+    T.Number E.ty (nonNumber⊃⍵)
   }
 
-  defn←{(⍺⍺ Env.defn ⍵⍵) ⍵}
+  defn←{(⍺⍺ Env.defn ⎕this.⍵⍵) ⍵}
   defOp←{(⍺⍺ defn (⍵⍵ mkNumFn)) ⍵}
   defRelOp←{(⍺⍺ defn (⍵⍵ mkRelFn)) ⍵}
 
@@ -63,7 +64,7 @@
   eq←{
     eqLst←{
       (≢⍺)≠≢⍵: 0
-      ∧/#.m.eq/(⍪⍺),⍪⍵
+      ∧/eq/(⍪⍺),⍪⍵
     }
     ty1 v1←⍺
     ty2 v2←⍵
@@ -75,7 +76,7 @@
   initBaseEnv←{
     e←GLOBAL
     _←('*ARGV*'      Env.def  (T.List ({T.String ⍵}¨⊃⍵))) e
-    _←('envs'        defn     {⎕←#.Env.ENV ⋄ #.T.nil}) e
+    _←('envs'        defn     {⎕←Env.ENV ⋄ T.nil}) e
     _←('nil'         Env.def  nil) e
     _←('apply'       Env.def  T.Builtin 'apply') e
     _←('+'           defOp    (+/)) e
@@ -86,23 +87,23 @@
     _←('<'           defRelOp {∧/ 2</⍵}) e
     _←('<='          defRelOp {∧/ 2≤/⍵}) e
     _←('>='          defRelOp {∧/ 2≥/⍵}) e
-    _←('='           defn     {#.T.bool ⊃∧/ 2 #.m.eq/⍵}) e
-    _←('car'         defn     {#.m.lst.car⊃⍵}) e
-    _←('cdr'         defn     {#.m.lst.cdr⊃⍵}) e
-    _←('last'        defn     {#.m.lst.last⊃⍵}) e
-    _←('butlast'     defn     {#.m.lst.butlast⊃⍵}) e
-    _←('cons'        defn     {(⊃⍵)#.m.lst.cons 2⊃⍵}) e
-    _←('concat'      defn     {#.m.lst.concat ⍵}) e
-    _←('list'        defn     {#.m.lst.list⍵}) e
-    _←('list?'       defn     {T.bool #.T.List=⊃⊃⍵}) e
-    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊#.T.List #.T.Vec)∧(0=≢v)}) e
-    _←('str'         defn     {#.T.String (⊃,/#.Printer.print¨⍵)})e
-    _←('pr-str'      defn     {#.T.String (¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵)})e
-    _←('prn'         defn     {⍞←(¯1↓⊃,/{(#.Printer.print_readably⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
-    _←('println'     defn     {⍞←(¯1↓⊃,/{(#.Printer.print⍵),' '}¨⍵),#.C.LF ⋄ #.T.nil})e
+    _←('='           defn     {T.bool ⊃∧/ 2 eq/⍵}) e
+    _←('car'         defn     {lst.car⊃⍵}) e
+    _←('cdr'         defn     {lst.cdr⊃⍵}) e
+    _←('last'        defn     {lst.last⊃⍵}) e
+    _←('butlast'     defn     {lst.butlast⊃⍵}) e
+    _←('cons'        defn     {(⊃⍵)lst.cons 2⊃⍵}) e
+    _←('concat'      defn     {lst.concat ⍵}) e
+    _←('list'        defn     {lst.list⍵}) e
+    _←('list?'       defn     {T.bool T.List=⊃⊃⍵}) e
+    _←('empty?'      defn     {ty v←⊃⍵ ⋄ T.bool (ty∊T.List T.Vec)∧(0=≢v)}) e
+    _←('str'         defn     {T.String (⊃,/Printer.print¨⍵)})e
+    _←('pr-str'      defn     {T.String (¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵)})e
+    _←('prn'         defn     {⍞←(¯1↓⊃,/{(Printer.print_readably⍵),' '}¨⍵),C.LF ⋄ T.nil})e
+    _←('println'     defn     {⍞←(¯1↓⊃,/{(Printer.print⍵),' '}¨⍵),C.LF ⋄ T.nil})e
     _←('slurp'       defn     {T.String (⊃⎕nget 2⊃⊃⍵)}) e
-    _←('read-string' defn     {#.m.read 2⊃⊃⍵}) e
-    _←('eval'        defn     {#.m.GLOBAL#.m.eval⊃⍵}) e
+    _←('read-string' defn     {read 2⊃⊃⍵}) e
+    _←('eval'        defn     {GLOBAL eval⊃⍵}) e
     _←('atom'        defn     (T.newAtom⊃)) e
     _←('atom?'       defn     {T.bool T.Atom≡⊃⊃⍵})e
     _←('deref'       defn     {T.deref⊃⍵}) e
@@ -151,6 +152,7 @@
     F.params←params
     F.env←env
     F.exp←exp
+    F.isMacro←0
 
     T.Function F
   }
@@ -241,7 +243,7 @@
     newEnv eval F.exp
   }
 
-  print←##.Printer.pprint
+  print←##.Printer.print_readably
 
   ∇R←env rep input
    :Trap 100
@@ -312,7 +314,7 @@
      _←GLOBAL rep code
    :Else
      ⍝ Banner suppressed for testing reasons
-     ⍞←Banner
+     ⍝ ⍞←Banner
      r←repIO⍣≡1
      'Bye.'
    :EndIf

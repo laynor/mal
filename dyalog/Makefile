@@ -9,9 +9,23 @@ SRCS = step0_repl.dyalogbuild \
        step6_file.dyalogbuild \
        step7_quote.dyalogbuild \
        step8_macros.dyalogbuild \
-       step9_try.dyalogbuild
+       step9_try.dyalogbuild \
+       stepA_mal.dyalogbuild
 BINS = $(SRCS:%.dyalogbuild=Distribution/%.dws)
 SRCDIR=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+OTHER_SRCS= Chars.dyalog \
+            core.dyalog \
+            debug.dyalog \
+            display.dyalog \
+            Env.dyalog \
+            errors.dyalog \
+            Errors.dyalog \
+            mal.dyalog \
+            notes.dyalog \
+            Printer.dyalog \
+            Reader.dyalog \
+            Types.dyalog
 
 all : $(BINS)
 

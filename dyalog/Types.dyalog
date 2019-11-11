@@ -13,10 +13,11 @@
    Symbol←'⍺'
    Keyword←':'
    Vec←'V'
+   Nil←'⍬'
 
    true←Bool 1
    false←Bool 0
-   nil←Symbol 'nil'
+   nil←Nil 'nil'
 
    ⍝ Lists
    empty←List⍬
@@ -82,7 +83,7 @@
    mkBuiltin←{
      ⍺←0
      ns←⎕NS''
-     ns.(tag data)←⍺ ⍵
+     ns.(isMacro tag data)←0 ⍺ ⍵
      ns.call←⍺⍺
      Builtin ns
    }

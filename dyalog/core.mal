@@ -1,4 +1,8 @@
 ;; Core mal functions
+(def! time-ms (fn* [& args] args))
+(def! seq (fn* [& args] args))
+
+(def! *host-language* "Dyalog APL")
 (def! apply (fn* [f & args] (apply-internal f args)))
 (defmacro! macroexpand (fn* [form] (quasiquote (macroexpand-internal (unquote form)))))
 (def! not (fn* [o] (if o false true)))
